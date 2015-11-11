@@ -328,46 +328,6 @@ int fetch_ins(const std::string ins, int order)
 			}
 		}
 	}
-
-	// if (op == "Ld" || op == "Sd")
-	// {
-	// 	j = CONS_MAP[LOAD_STORE_UNIT][NUM_RS];
-	// 	for (i = 0; i < j; ++i)
-	// 	{
-	// 		if (LS_RS[i]->BUSY == FALSE)
-	// 		{
-	// 			LS_RS[i]->BUSY = TRUE;
-	// 			LS_RS[i]->OP = op;
-	// 			/* whether the Address is ready */
-	// 			// std::cout << "******* in here *******" << std::endl;
-	// 			int is_ready = addr_ready(operant2);
-	// 			// std::cout << "******* in here *******" << is_ready << std::endl;
-	// 			// print_rat();
-	// 			// std::cout << "******* in here *******&" << std::endl;
-	// 			if(is_ready == TRUE)
-	// 			{
-	// 				LS_RS[i]->A = cal_addr(operant2);
-	// 				LS_RS[i]->ROB_ENTRY = "ROB" + std::to_string(ROB_NOW_NUM);
-	// 				/* update RAT */
-	// 				update_rat_rob(operant1);
-	// 				INSTRS[order - 1]->in_rs = i;
-	// 				// std::cout << "in fetch_ins0 " << std::endl;
-	// 				// std::cout << operant1 << RAT[operant1] << std::endl;
-	// 			}
-	// 			else
-	// 			{
-	// 				/* update RAT */
-	// 				LS_RS[i]->ROB_ENTRY = "ROB" + std::to_string(ROB_NOW_NUM);
-	// 				update_rat_rob(operant1);
-	// 				INSTRS[order - 1]->in_rs = i;
-	// 				// std::cout << "in fetch_ins " << std::endl;
-	// 			}
-	// 			has_fetch = TRUE;
-	// 			++LS_RS_USED;
-	// 			break;
-	// 		}
-	// 	}
-	// }
 	else if (op == "Beq" || op == "Bne")
 	{
 
@@ -888,16 +848,6 @@ int value_available_in_vj_or_qj(struct instr **INSTRS, int num)
 				return FALSE;
 		}
 	}
-
-	// if (RAT.find(operant) == RAT.end())
-	// 	return FALSE;
-	// else
-	// {
-	// 	if (ROB[RAT[operant] - 1]->finish)
-	// 		return TRUE;
-	// 	else
-	// 		return FALSE;
-	// }
 }
 
 std::string first_operant(std::string ins)
@@ -958,35 +908,26 @@ int execute(struct instr **INSTRS, int num)
 		{
 			int _in_rs = INSTRS[num - 1]->in_rs;
 			std::cout << _in_rs << " in_rs" << std::endl;
-			// if (LS_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY.compare(ROB[RAT[operant1] - 1]->rob_name) != 0)
-			// {
-			// 	std::cout << "RAT for " << operant1 << " in used" << std::endl;
-			// 	return FALSE;
-			// }
-			// else
-			// {
-				// std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
-				std::cout << "Instruction " << num << " begin execute" << std::endl;
-				// std::cout << "*****************^^^^^^^^********************" << std::endl;
-					int loc1 = operant2.find("(");
-					int loc2 = operant2.find(")");
-					std::string reg = operant2.substr(loc1 + 1, loc2 - loc1 - 1);
-					if (addr_ready(INSTRS, num) == TRUE && (LS_RS[INSTRS[num - 1]->in_rs]->VJ != EMPTY || 
-							ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) && 
-							TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
-					{
-						// std::cout << "**********everything's ready **********" << std::endl;
-						lock_storing_address(INSTRS, num);
-						RESULT[num - 1][EXE] = CYCLE;
-						INSTRS[num - 1]->state = EXE;
-						return TRUE;
-					}
-					else 
-					{
-						return FALSE;
-					}
-				
-			// }
+			// std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
+			std::cout << "Instruction " << num << " begin execute" << std::endl;
+			// std::cout << "*****************^^^^^^^^********************" << std::endl;
+			int loc1 = operant2.find("(");
+			int loc2 = operant2.find(")");
+			std::string reg = operant2.substr(loc1 + 1, loc2 - loc1 - 1);
+			if (addr_ready(INSTRS, num) == TRUE && (LS_RS[INSTRS[num - 1]->in_rs]->VJ != EMPTY || 
+				ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) && 
+				TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
+			{
+				// std::cout << "**********everything's ready **********" << std::endl;
+				lock_storing_address(INSTRS, num);
+				RESULT[num - 1][EXE] = CYCLE;
+				INSTRS[num - 1]->state = EXE;
+				return TRUE;
+			}
+			else 
+			{
+				return FALSE;
+			}
 		}
 		else
 		{
@@ -1079,29 +1020,6 @@ int memory(struct instr **INSTRS, int num)
 	}
 	else
 	{
-		// if (RESULT[num - 1][EXE] != 0)
-		// {
-		// 	int need = INSTRS[num - 1]->cycle_need;
-		// 	int exe_begin = RESULT[num - 1][EXE];
-		// 	if (CYCLE - exe_begin == need)
-		// 	{
-		// 		RESULT[num - 1][MEMORY] = CYCLE;
-		// 		std::cout << "Instruction " << num << " memory begin" << std::endl;
-		// 		INSTRS[num - 1]->state = MEMORY;
-		// 		return TRUE;
-		// 	}
-		// 	else
-		// 	{
-		// 		std::cout << "Instruction " << num << " not finish executing" << std::endl;
-		// 	return FALSE;
-		// 	}
-		// }
-		// else
-		// {
-		// 	std::cout << "Instruction " << num << " not execute yet." << std::endl;
-		// 	return FALSE;
-		// }
-		//
 		if (RESULT[num - 1][EXE] != 0)
 		{
 			int need = INSTRS[num - 1]->cycle_need;
@@ -1379,49 +1297,6 @@ float do_instr_cal(struct instr **INSTRS, int num)
 			update_rob_value(_in_rob, res);
 			return res;
 		}
-
-		// if (RAT.find(operant2) != RAT.end())
-		// {
-		// 	val_j = ROB[RAT[operant2] - 1]->value;
-		// 	// std::cout << "****** val_k is :" << val_j << std::endl;
-		// }
-		// else
-		// {
-		// 	val_j = ARF[operant2];
-		// 	// std::cout << "****** val_k is :" << val_j << std::endl;
-		// }
-
-		// if (RAT.find(operant3) != RAT.end())
-		// {
-		// 	val_k = ROB[RAT[operant3] - 1]->value;
-		// 	// std::cout << "****** val_k is :" << val_k << std::endl;
-		// }
-		// else
-		// {
-		// 	val_k = ARF[operant3];
-		// 	// std::cout << "****** val_k is :" << val_k << std::endl;
-		// }
-
-
-		// if (op.find("A") == 0) /* Add thing */
-		// {
-		// 	// if (ARF.find(operation2))
-		// 	float res = val_j + val_k;
-		// 	update_rob_value(operant1, res);
-		// 	return res;
-		// }
-		// else if (op.find("S") == 0)  /* Sub thing */
-		// {
-		// 	float res = val_j - val_k;
-		// 	update_rob_value(operant1, res);
-		// 	return res;
-		// }
-		// else /* Multiplier thing */
-		// {
-		// 	float res = val_j * val_k;
-		// 	update_rob_value(operant1, res);
-		// 	return res;
-		// }
 	}
 }
 
@@ -1567,19 +1442,6 @@ int commit(struct instr **INSTRS, int num)
 		if (RESULT[num - 1][WB] != 0 && num == CAN_COMMIT && commit_is_lock == FALSE)
 		{
 			if (ROB[num - 1]->finish == TRUE)
-			// if (INSTRS[num - 1]->_ins.find("Add.d") == 0 || INSTRS[num - 1]->_ins.find("Sub.d") == 0)
-			// {
-			// 	if (INTEGER_ADDER_RS[INSTRS[num - ]->in_rs]->VJ !=)
-			// }
-			// else if (INSTRS[num - 1]->_ins.find("Mult.d") == 0)
-			// {
-
-			// }
-			// else
-			// {
-
-			// }
-
 			{
 				commit_is_lock = TRUE;
 				RESULT[num - 1][COMMIT] = CYCLE;
@@ -1598,12 +1460,6 @@ int commit(struct instr **INSTRS, int num)
 
 void update_rat_rob(std::string operant)
 {
-	// for (std::unordered_map<std::string, int>::iterator it = RAT.begin();
-	// 		it != RAT.end(); ++it)
-	// {
-	// 	std::cout << "***********&&&&&& " << it->first << std::endl;
-	// }
-
 	ROB[ROB_NOW_NUM - 1]->dest = operant;
 	if (RAT.find(operant) == RAT.end())
 	{
@@ -1736,12 +1592,6 @@ void run_simulator()
 				result = run_to_state(INSTRS, loop);		
 			}
 		}
-		// std::cout << "********************&&&&&&&&&&&&&&&&&******************** " << ROB_NOW_NUM << std::endl;
-		// if (HAS_COMMIT[INS_NUM] == TRUE)
-		// {
-		// 	refresh_value();
-		// 	break;
-		// // }
 		if (HAS_COMMIT[INS_NUM] == TRUE)
 		{
 			// std::cout << "LS_RS_USED is: " << LS_RS_USED << std::endl;
