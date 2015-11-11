@@ -267,7 +267,7 @@ int fetch_ins(const std::string ins, int order)
 					LS_RS[i]->A = (num + ARF[reg]);
 				}
 				else if (ROB[RAT[reg] - 1]->finish == TRUE)
-				{	
+				{
 					LS_RS[i]->A = (num + ROB[RAT[reg] - 1]->value);
 				}
 				else
@@ -301,7 +301,7 @@ int fetch_ins(const std::string ins, int order)
 					LS_RS[i]->A = (num + ARF[reg]);
 				}
 				else if (ROB[RAT[reg] - 1]->finish == TRUE)
-				{	
+				{
 					LS_RS[i]->A = (num + ROB[RAT[reg] - 1]->value);
 				}
 				else
@@ -410,7 +410,7 @@ int cal_addr(struct instr **INSTRS, int num)
 		res = LS_RS[INSTRS[num - 1]->in_rs]->A;
 		return res;
 	}
-	else 
+	else
 	{
 		res = int(ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INSTRS[num - 1]->in_rs]->VK);
 		return res;
@@ -435,10 +435,10 @@ int addr_ready(struct instr **INSTRS, int num)
 	std::string reg = INSTRS[num - 1]->_ins.substr(loc1 + 1, loc2 - loc1 - 1);
 	if (LS_RS[INSTRS[num - 1]->in_rs]->A != EMPTY)
 	{
-		if (MEMORY_LOCK.find(LS_RS[INSTRS[num - 1]->in_rs]->A) == MEMORY_LOCK.end() && 
+		if (MEMORY_LOCK.find(LS_RS[INSTRS[num - 1]->in_rs]->A) == MEMORY_LOCK.end() &&
 			store_memory_just_commit(LS_RS[INSTRS[num - 1]->in_rs]->A) == FALSE)
 			return TRUE;
-		else 
+		else
 			return FALSE;
 	}
 	else if (ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QK.substr(3, 1).c_str()) - 1]->finish == TRUE && TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end())
@@ -887,12 +887,12 @@ int execute(struct instr **INSTRS, int num)
 			else
 			{
 				// std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
-				
+
 				// std::cout << "*****************^^^^^^^^********************" << std::endl;
 				if (addr_ready(INSTRS, num) == TRUE)
 				{
 					std::cout << "Instruction " << num << " begin execute" << std::endl;
-						
+
 					RESULT[num - 1][EXE] = CYCLE;
 					INSTRS[num - 1]->state = EXE;
 					return TRUE;
@@ -901,7 +901,7 @@ int execute(struct instr **INSTRS, int num)
 				{
 					std::cout << "Instruction " << num << " Address not ready" << std::endl;
 					return FALSE;
-				}			
+				}
 			}
 		}
 		else if (op.compare("Sd") == 0)
@@ -914,8 +914,8 @@ int execute(struct instr **INSTRS, int num)
 			int loc1 = operant2.find("(");
 			int loc2 = operant2.find(")");
 			std::string reg = operant2.substr(loc1 + 1, loc2 - loc1 - 1);
-			if (addr_ready(INSTRS, num) == TRUE && (LS_RS[INSTRS[num - 1]->in_rs]->VJ != EMPTY || 
-				ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) && 
+			if (addr_ready(INSTRS, num) == TRUE && (LS_RS[INSTRS[num - 1]->in_rs]->VJ != EMPTY ||
+				ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) &&
 				TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
 			{
 				// std::cout << "**********everything's ready **********" << std::endl;
@@ -924,7 +924,7 @@ int execute(struct instr **INSTRS, int num)
 				INSTRS[num - 1]->state = EXE;
 				return TRUE;
 			}
-			else 
+			else
 			{
 				return FALSE;
 			}
@@ -1062,32 +1062,32 @@ int write_back(struct instr **INSTRS, int num)
 	std::string operant1 = elems[1];
 	if (ins.find("Ld") == 0)
 	{
-		if (RESULT[num - 1][MEMORY] != 0)
-		{
-			int need = INSTRS[num - 1]->cycle_need;
-			int mem_begin = RESULT[num - 1][MEMORY];
-			if (CYCLE - mem_begin == need)
-			{
-				RESULT[num - 1][WB] = CYCLE;
-				float res = do_instr_cal(INSTRS, num);
-				// reset_rat(operant1);
-				clear_rs_entry(num, LOAD_STORE_UNIT);
-				std::cout << "Instruction " << num << " write back" << std::endl;
-				INSTRS[num - 1]->state = WB;
-				/* update ROB */
-				return TRUE;
-			}
-			else
-			{
-				std::cout << "Instruction " << num << " wait to finish memory" << std::endl;
-				return FALSE;
-			}
-		}
-		else
-		{
-			std::cout << "Instruction " << num << " not memory" << std::endl;
-			return FALSE;
-		}
+	    if (RESULT[num - 1][MEMORY] != 0)
+	    {
+	        int need = INSTRS[num - 1]->cycle_need;
+	        int mem_begin = RESULT[num - 1][MEMORY];
+	        if (CYCLE - mem_begin == need)
+	        {
+	            RESULT[num - 1][WB] = CYCLE;
+	            float res = do_instr_cal(INSTRS, num);
+	            // reset_rat(operant1);
+	            clear_rs_entry(num, LOAD_STORE_UNIT);
+	            std::cout << "Instruction " << num << " write back" << std::endl;
+	            INSTRS[num - 1]->state = WB;
+	            /* update ROB */
+	            return TRUE;
+	        }
+	        else
+	        {
+	            std::cout << "Instruction " << num << " wait to finish memory" << std::endl;
+	            return FALSE;
+	        }
+	    }
+	    else
+	    {
+	        std::cout << "Instruction " << num << " not memory" << std::endl;
+	        return FALSE;
+	    }
 	}
 	else if (ins.find("Sd") == 0)
 	{
@@ -1184,7 +1184,7 @@ float do_instr_cal(struct instr **INSTRS, int num)
 				return LS_RS[INSTRS[num - 1]->in_rs]->VJ;
 			}
 		}
-		else 
+		else
 		{
 			float res = ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
 			if (MEM.find(address) != MEM.end())
@@ -1198,7 +1198,7 @@ float do_instr_cal(struct instr **INSTRS, int num)
 				MEM.insert(the_pair);
 				return res;
 			}
-		}		
+		}
 	}
 	else
 	{
@@ -1425,7 +1425,7 @@ int commit(struct instr **INSTRS, int num)
 			{
 				float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
-				
+
 				ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY.substr(3, 1).c_str())- 1]->finish = TRUE;
 				clear_rs_entry(num, LOAD_STORE_UNIT);
 				commit_is_lock = TRUE;
@@ -1589,7 +1589,7 @@ void run_simulator()
 		{
 			for (loop = 1; loop <= INS_NUM; ++loop)
 			{
-				result = run_to_state(INSTRS, loop);		
+				result = run_to_state(INSTRS, loop);
 			}
 		}
 		if (HAS_COMMIT[INS_NUM] == TRUE)
