@@ -155,10 +155,15 @@ static std::unordered_map<int, int> HAS_FETCH;
  */
 static std::unordered_map<int, int> HAS_COMMIT;
 
+// *
+//  *  pointer to all instr stucture
+ 
+// static struct instr **INSTRS;
+
 /**
- *  pointer to all instr stucture
+ *  redefine the pointer INSTRS to vector
  */
-static struct instr **INSTRS;
+static std::vector<struct instr> INSTRS;
 
 /**
  *  next number of instruction needed to fetch
@@ -336,7 +341,7 @@ cal_addr(std::string operant);
  *  When load and store, whether the address is ready, line 365
  */
 int
-addr_ready(struct instr **INSTRS, int num);
+addr_ready(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  set operant into RS, 0 for Integer adder, 1 for FP adder, 2 for FP multiplier
@@ -368,25 +373,25 @@ init_instructions();
  *  check whether rs is available for INSTRS[num]. line 604
  */
 int
-check_rs_available(struct instr **INSTRS, int num);
+check_rs_available(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  issue an instruction, return TURE or FALSE, line 639
  */
 int
-issue(struct instr **INSTRS, int num);
+issue(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  value available in arf, return TRUE or FALSE, line 676
  */
 int
-value_available_in_vj_or_qj(struct instr **INSTRS, int num);
+value_available_in_vj_or_qj(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  value available in RAT and ROB, line 683
  */
 int
-value_available_in_vk_or_qk(struct instr **INSTRS, int num);
+value_available_in_vk_or_qk(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  find first operant in instruction, line 696
@@ -398,7 +403,7 @@ first_operant(std::string ins);
  *  execute an instruction, return TRUE or FALSE, line 704
  */
 int
-execute(struct instr **INSTRS, int num);
+execute(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  move the SHOULD_FETCH instruction into pipeline, line 767
@@ -410,19 +415,19 @@ move_to_pipeline_do_nothing();
  *  do memory part, line 773
  */
 int
-memory(struct instr **INSTRS, int num);
+memory(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  write back, line 818
  */
 int
-write_back(struct instr **INSTRS, int num);
+write_back(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  do the instruction calculation, line 886
  */
 float
-do_instr_cal(struct instr **INSTRS, int num);
+do_instr_cal(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  clear RS entry, line 944
@@ -434,13 +439,13 @@ clear_rs_entry(int num, int type);
  *  run an instruction in a certain state, line 999
  */
 int
-run_to_state(struct instr **INSTRS, int num);
+run_to_state(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  commit an instruction, line 1041
  */
 int
-commit(struct instr **INSTRS, int num);
+commit(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  update RAT and ROB together, line 1060
@@ -530,7 +535,7 @@ print_just_commit_addr();
  *  lock storing memory address
  */
 void 
-lock_storing_address(struct instr **INSTRS, int num);
+lock_storing_address(std::vector<struct instr>& INSTRS, int num);
 
 /**
  *  determine whether a branch has been resolved

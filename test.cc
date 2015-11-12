@@ -1,11 +1,40 @@
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
+struct T
+{
+	string a;
+	int val;
+};
+
+
 int main()
 {
-	string str("-3");
-	cout << atoi(str.c_str()) << endl;
+	vector<struct T> map;
+	for (int i = 0; i < 2; i++)
+	{
+		if (i == 0)
+		{
+			struct T tmp;
+			tmp.a = "abgc";
+			tmp.val = 1;
+			map.push_back(tmp);
+		}
+		else
+		{
+			struct T tmp;
+			tmp.a = "defg";
+			tmp.val = 2;
+			map.push_back(tmp);
+		}
+	}
+	for (auto it = map.begin(); it != map.end(); ++it)
+	{
+		cout << it->a << "	" << it->val << endl;
+	}
+	
 	return 0;
 }
 

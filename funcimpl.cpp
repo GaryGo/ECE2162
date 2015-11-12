@@ -259,7 +259,7 @@ int fetch_ins(const std::string ins, int order)
 				LS_RS[i]->BUSY = TRUE;
 				LS_RS[i]->OP = op;
 				LS_RS[i]->ROB_ENTRY = "ROB" + std::to_string(ROB_NOW_NUM);
-				INSTRS[order - 1]->in_rs = i;
+				INSTRS[order - 1].in_rs = i;
 				update_rat_rob(operant1);
 				if (RAT.find(reg) == RAT.end())  /* reg not rename in RAT */
 				{
@@ -293,7 +293,7 @@ int fetch_ins(const std::string ins, int order)
 				LS_RS[i]->OP = op;
 				LS_RS[i]->ROB_ENTRY = "ROB" + std::to_string(ROB_NOW_NUM);
 				++ROB_NOW_NUM;
-				INSTRS[order - 1]->in_rs = i;
+				INSTRS[order - 1].in_rs = i;
 				// update_rat_rob(operant1);
 				if (RAT.find(reg) == RAT.end())  /* reg not rename in RAT */
 				{
@@ -344,7 +344,7 @@ int fetch_ins(const std::string ins, int order)
 				set_operant(operant2, 0, i, 2);
 				INTEGER_ADDER_RS[i]->A = atoi(operant3.c_str());
 				update_rat_rob(op);
-				INSTRS[order - 1]->in_rs = i;
+				INSTRS[order - 1].in_rs = i;
 				has_fetch = TRUE;
 				++INTEGER_ADDER_RS_USED;
 				break;
@@ -368,7 +368,7 @@ int fetch_ins(const std::string ins, int order)
 					set_operant(operant2, 0, i, 1);
 					set_operant(operant3, 0, i, 2);
 					update_rat_rob(operant1);
-					INSTRS[order - 1]->in_rs = i;
+					INSTRS[order - 1].in_rs = i;
 					has_fetch = TRUE;
 					++INTEGER_ADDER_RS_USED;
 					break;
@@ -388,7 +388,7 @@ int fetch_ins(const std::string ins, int order)
 					set_operant(operant2, 0, i, 1);
 					INTEGER_ADDER_RS[i]->VK = atoi(operant3.c_str());
 					update_rat_rob(operant1);
-					INSTRS[order - 1]->in_rs = i;
+					INSTRS[order - 1].in_rs = i;
 					has_fetch = TRUE;
 					++INTEGER_ADDER_RS_USED;
 					break;
@@ -408,7 +408,7 @@ int fetch_ins(const std::string ins, int order)
 					set_operant(operant2, 1, i, 1);
 					set_operant(operant3, 1, i, 2);
 					update_rat_rob(operant1);
-					INSTRS[order - 1]->in_rs = i;
+					INSTRS[order - 1].in_rs = i;
 					has_fetch = TRUE;
 					++FP_ADDER_RS_USED;
 					break;
@@ -430,7 +430,7 @@ int fetch_ins(const std::string ins, int order)
 
 					set_operant(operant3, 2, i, 2);
 					update_rat_rob(operant1);
-					INSTRS[order - 1]->in_rs = i;
+					INSTRS[order - 1].in_rs = i;
 					has_fetch = TRUE;
 					++FP_MULT_RS_USED;
 					break;
@@ -441,17 +441,17 @@ int fetch_ins(const std::string ins, int order)
 	return has_fetch;
 }
 
-int cal_addr(struct instr **INSTRS, int num)
+int cal_addr(std::vector<struct instr>& INSTRS, int num)
 {
 	int res;
-	if (LS_RS[INSTRS[num - 1]->in_rs]->A != EMPTY)
+	if (LS_RS[INSTRS[num - 1].in_rs]->A != EMPTY)
 	{
-		res = LS_RS[INSTRS[num - 1]->in_rs]->A;
+		res = LS_RS[INSTRS[num - 1].in_rs]->A;
 		return res;
 	}
 	else
 	{
-		res = int(ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INSTRS[num - 1]->in_rs]->VK);
+		res = int(ROB[atoi(LS_RS[INSTRS[num - 1].in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INSTRS[num - 1].in_rs]->VK);
 		return res;
 	}
 }
@@ -467,22 +467,22 @@ int store_memory_just_commit(int address)
 }
 
 
-int addr_ready(struct instr **INSTRS, int num)
+int addr_ready(std::vector<struct instr>& INSTRS, int num)
 {
-	int loc1 = INSTRS[num - 1]->_ins.find("(");
-	int loc2 = INSTRS[num - 1]->_ins.find(")");
-	std::string reg = INSTRS[num - 1]->_ins.substr(loc1 + 1, loc2 - loc1 - 1);
-	if (LS_RS[INSTRS[num - 1]->in_rs]->A != EMPTY)
+	int loc1 = INSTRS[num - 1]._ins.find("(");
+	int loc2 = INSTRS[num - 1]._ins.find(")");
+	std::string reg = INSTRS[num - 1]._ins.substr(loc1 + 1, loc2 - loc1 - 1);
+	if (LS_RS[INSTRS[num - 1].in_rs]->A != EMPTY)
 	{
-		if (MEMORY_LOCK.find(LS_RS[INSTRS[num - 1]->in_rs]->A) == MEMORY_LOCK.end() &&
-			store_memory_just_commit(LS_RS[INSTRS[num - 1]->in_rs]->A) == FALSE)
+		if (MEMORY_LOCK.find(LS_RS[INSTRS[num - 1].in_rs]->A) == MEMORY_LOCK.end() &&
+			store_memory_just_commit(LS_RS[INSTRS[num - 1].in_rs]->A) == FALSE)
 			return TRUE;
 		else
 			return FALSE;
 	}
-	else if (ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QK.substr(3, 1).c_str()) - 1]->finish == TRUE && TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end())
+	else if (ROB[atoi(LS_RS[INSTRS[num - 1].in_rs]->QK.substr(3, 1).c_str()) - 1]->finish == TRUE && TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end())
 	{
-		int address = int(ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INSTRS[num - 1]->in_rs]->VK);
+		int address = int(ROB[atoi(LS_RS[INSTRS[num - 1].in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INSTRS[num - 1].in_rs]->VK);
 		if (MEMORY_LOCK.find(address) == MEMORY_LOCK.end() &&
 			store_memory_just_commit(address) == FALSE)
 			return TRUE;
@@ -690,69 +690,69 @@ void init_instructions()
 {
 	int i;
 	// std::cout << "instruction number is: " << INS_NUM << std::endl;
-	INSTRS = new struct instr *[INS_NUM];
+	// INSTRS = new struct instr *[INS_NUM];
 	for (i = 0; i < INS_NUM; ++i)
 	{
-		INSTRS[i] = new struct instr;
+		struct instr tmp_create;
 		std::string the_ins = ALL_INS[i + 1];
-		// std::cout << "the ins is: " << the_ins << std::endl;
-		INSTRS[i]->_ins = the_ins;
-		INSTRS[i]->num = i + 1;
-		INSTRS[i]->in_rs = EMPTY;
-		INSTRS[i]->state = -1;
+		tmp_create._ins = the_ins;
+		tmp_create.num = i + 1;
+		tmp_create.in_rs = EMPTY;
+		tmp_create.state = -1;
 		if (the_ins.find("Ld") == 0 || the_ins.find("Sd") == 0)
 		{
 			// std::cout << "in Ld, Sd" << std::endl;
-			INSTRS[i]->ins_type = LOAD_STORE_UNIT;
-			INSTRS[i]->cycle_need = CONS_MAP[LOAD_STORE_UNIT][CYCLE_MEM];
-			INSTRS[i]->has_committed = FALSE;
+			tmp_create.ins_type = LOAD_STORE_UNIT;
+			tmp_create.cycle_need = CONS_MAP[LOAD_STORE_UNIT][CYCLE_MEM];
+			tmp_create.has_committed = FALSE;
 		}
 		else if (the_ins.find("Add.d") == 0 || the_ins.find("Sub.d") == 0)
 		{
 			// std::cout << "in Add.d, Sub.d" << std::endl;
-			INSTRS[i]->ins_type = FP_ADDER;
-			INSTRS[i]->cycle_need = CONS_MAP[FP_ADDER][CYCLE_EX];
-			INSTRS[i]->has_committed = FALSE;
+			tmp_create.ins_type = FP_ADDER;
+			tmp_create.cycle_need = CONS_MAP[FP_ADDER][CYCLE_EX];
+			tmp_create.has_committed = FALSE;
 		}
 		else if (the_ins.find("Mult.d") == 0)
 		{
 			// std::cout << "in mult.d" << std::endl;
-			INSTRS[i]->ins_type = FP_MULTIPLIER;
-			INSTRS[i]->cycle_need = CONS_MAP[FP_MULTIPLIER][CYCLE_EX];
-			INSTRS[i]->has_committed = FALSE;
+			tmp_create.ins_type = FP_MULTIPLIER;
+			tmp_create.cycle_need = CONS_MAP[FP_MULTIPLIER][CYCLE_EX];
+			tmp_create.has_committed = FALSE;
 		}
 		else
 		{
 			// std::cout << "in other" << std::endl;
-			INSTRS[i]->ins_type = INTEGER_ADDER;
+			tmp_create.ins_type = INTEGER_ADDER;
 			// std::cout << "type is: " << INTEGER_ADDER << std::endl;
-			INSTRS[i]->cycle_need = CONS_MAP[INTEGER_ADDER][CYCLE_EX];
-			INSTRS[i]->has_committed = FALSE;
+			tmp_create.cycle_need = CONS_MAP[INTEGER_ADDER][CYCLE_EX];
+			tmp_create.has_committed = FALSE;
 			// std::cout << "cycle needed is: " << CONS_MAP[INTEGER_ADDER][CYCLE_EX] << std::endl;
 		}
+		INSTRS.push_back(tmp_create);
 	}
 }
 
-int check_rs_available(struct instr **INSTRS, int num)
+int check_rs_available(std::vector<struct instr>& INSTRS, int num)
 {
 	// std::cout << INSTRS[num]->ins_type << std::endl;
 	// std::cout << INSTRS[num]->_ins << std::endl;
 	--num;
-	if (INSTRS[num]->ins_type == INTEGER_ADDER)
+	if (INSTRS[num].ins_type == INTEGER_ADDER)
 	{
 		if (INTEGER_ADDER_RS_USED == CONS_MAP[INTEGER_ADDER][NUM_RS])
 			return FALSE;
 		else
 			return TRUE;
 	}
-	else if (INSTRS[num]->ins_type == FP_ADDER)
+	else if (INSTRS[num].ins_type == FP_ADDER)
 	{
 		if (FP_ADDER_RS_USED == CONS_MAP[FP_ADDER][NUM_RS])
 			return FALSE;
 		else
 			return TRUE;
 	}
-	else if (INSTRS[num]->ins_type == FP_MULTIPLIER)
+	else if (INSTRS[num].ins_type == FP_MULTIPLIER)
 	{
 		if (FP_MULT_RS_USED == CONS_MAP[FP_MULTIPLIER][NUM_RS])
 			return FALSE;
@@ -768,10 +768,10 @@ int check_rs_available(struct instr **INSTRS, int num)
 	}
 }
 
-int issue(struct instr **INSTRS, int num)
+int issue(std::vector<struct instr>& INSTRS, int num)
 {
-	std::cout << "Instruction " << num << " state is: " << INSTRS[num - 1]->state << std::endl;
-	if (INSTRS[num - 1]->state == -1)
+	std::cout << "Instruction " << num << " state is: " << INSTRS[num - 1].state << std::endl;
+	if (INSTRS[num - 1].state == -1)
 	{
 		int tmp = check_rs_available(INSTRS, num);
 		if (tmp == TRUE) /* entry available for this instruction */
@@ -783,15 +783,15 @@ int issue(struct instr **INSTRS, int num)
 			// std::cout << renamed_in_rat(first_operant(INSTRS[num - 1]->_ins)) << std::endl;
 				// std::cout << "************** message for debugging ************** "<< RAT[first_operant(INSTRS[num - 1]->_ins)] << std::endl;
 				// std::cout << "here" << std::endl;
-			int has_fetch = fetch_ins(INSTRS[num - 1]->_ins, num);
+			int has_fetch = fetch_ins(INSTRS[num - 1]._ins, num);
 			// std::cout << "here: " << has_fetch << std::endl;
 			std::pair<int, int> the_pair (num, has_fetch);
 			HAS_FETCH.insert(the_pair);
 			// ++SHOULD_FETCH;
 			std::cout << "Instruction " << num << " issue" << std::endl;
-			INSTRS[num - 1]->state = ISSUE;
+			INSTRS[num - 1].state = ISSUE;
+			std::cout << "debugging " << INSTRS[num - 1].state << "	" << SHOULD_FETCH << std::endl;
 			return TRUE;
-
 		}
 		std::cout << num << " RS is full." << std::endl;
 		return FALSE;
@@ -799,10 +799,10 @@ int issue(struct instr **INSTRS, int num)
 	return TRUE;
 }
 
-int value_available_in_vk_or_qk(struct instr **INSTRS, int num)
+int value_available_in_vk_or_qk(std::vector<struct instr>& INSTRS, int num)
 {
-	std::string ins = INSTRS[num - 1]->_ins;
-	int _in_rs = INSTRS[num - 1]->in_rs;
+	std::string ins = INSTRS[num - 1]._ins;
+	int _in_rs = INSTRS[num - 1].in_rs;
 	if (ins.find("Mult.d") == 0)
 	{
 		if (FP_MULT_RS[_in_rs]->VK != EMPTY)
@@ -844,10 +844,10 @@ int value_available_in_vk_or_qk(struct instr **INSTRS, int num)
 	}
 }
 
-int value_available_in_vj_or_qj(struct instr **INSTRS, int num)
+int value_available_in_vj_or_qj(std::vector<struct instr>& INSTRS, int num)
 {
-	std::string ins = INSTRS[num - 1]->_ins;
-	int _in_rs = INSTRS[num - 1]->in_rs;
+	std::string ins = INSTRS[num - 1]._ins;
+	int _in_rs = INSTRS[num - 1].in_rs;
 	if (ins.find("Mult.d") == 0)
 	{
 		if (FP_MULT_RS[_in_rs]->VJ != EMPTY)
@@ -897,10 +897,10 @@ std::string first_operant(std::string ins)
 	return operant;
 }
 
-int execute(struct instr **INSTRS, int num)
+int execute(std::vector<struct instr>& INSTRS, int num)
 {
 
-	if (RESULT[num - 1][ISSUE] == 0)
+	if (RESULT[INSTRS[num - 1].num - 1][ISSUE] == 0)
 	{
 		std::cout << "Instruction " << num << " did not issue" << std::endl;
 		return FALSE;
@@ -909,14 +909,14 @@ int execute(struct instr **INSTRS, int num)
 	{
 		// std::cout << "debuging here ********************* 11111" << std::endl;
 		std::vector<std::string> elems;
-		pro_instr(INSTRS[num - 1]->_ins, elems);
+		pro_instr(INSTRS[num - 1]._ins, elems);
 		std::string op = elems[0];
 		std::string operant1 = elems[1];
 		std::string operant2 = elems[2];
 		// std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
-		if (op.compare("Ld") == 0 && LS_FU_USED < CONS_MAP[LOAD_STORE_UNIT][NUM_FUS])
+		if (op.find("Ld") == 0 && LS_FU_USED < CONS_MAP[LOAD_STORE_UNIT][NUM_FUS])
 		{
-			int _in_rs = INSTRS[num - 1]->in_rs;
+			int _in_rs = INSTRS[num - 1].in_rs;
 			// std::cout << _in_rs << " in_rs" << std::endl;
 			// if (LS_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY.compare(ROB[RAT[operant1] - 1]->rob_name) != 0)
 			// {
@@ -932,8 +932,8 @@ int execute(struct instr **INSTRS, int num)
 			{
 				std::cout << "Instruction " << num << " begin execute" << std::endl;
 				++LS_FU_USED;
-				RESULT[num - 1][EXE] = CYCLE;
-				INSTRS[num - 1]->state = EXE;
+				RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+				INSTRS[num - 1].state = EXE;
 				return TRUE;
 			}
 			else
@@ -943,9 +943,9 @@ int execute(struct instr **INSTRS, int num)
 			}
 			// }
 		}
-		else if (op.compare("Sd") == 0 && LS_FU_USED < CONS_MAP[LOAD_STORE_UNIT][NUM_FUS])
+		else if (op.find("Sd") == 0 && LS_FU_USED < CONS_MAP[LOAD_STORE_UNIT][NUM_FUS])
 		{
-			int _in_rs = INSTRS[num - 1]->in_rs;
+			int _in_rs = INSTRS[num - 1].in_rs;
 			std::cout << _in_rs << " in_rs" << std::endl;
 			// std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
 			std::cout << "Instruction " << num << " begin execute" << std::endl;
@@ -953,15 +953,15 @@ int execute(struct instr **INSTRS, int num)
 			int loc1 = operant2.find("(");
 			int loc2 = operant2.find(")");
 			std::string reg = operant2.substr(loc1 + 1, loc2 - loc1 - 1);
-			if (addr_ready(INSTRS, num) == TRUE && (LS_RS[INSTRS[num - 1]->in_rs]->VJ != EMPTY ||
-				ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) &&
+			if (addr_ready(INSTRS, num) == TRUE && (LS_RS[INSTRS[num - 1].in_rs]->VJ != EMPTY ||
+				ROB[atoi(LS_RS[INSTRS[num - 1].in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) &&
 				TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
 			{
 				// std::cout << "**********everything's ready **********" << std::endl;
 				lock_storing_address(INSTRS, num);
 				++LS_FU_USED;
-				RESULT[num - 1][EXE] = CYCLE;
-				INSTRS[num - 1]->state = EXE;
+				RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+				INSTRS[num - 1].state = EXE;
 				return TRUE;
 			}
 			else
@@ -969,14 +969,14 @@ int execute(struct instr **INSTRS, int num)
 				return FALSE;
 			}
 		}
-		else if ((op.compare("Bne") == 0 || op.compare("Beu") == 0) && INTEGER_FU_USED < CONS_MAP[INTEGER_ADDER][NUM_FUS])
+		else if ((op.find("Bne") == 0 || op.find("Beu") == 0) && INTEGER_FU_USED < CONS_MAP[INTEGER_ADDER][NUM_FUS])
 		{
 			if (value_available_in_vj_or_qj(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end() &&
 					value_available_in_vk_or_qk(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 			{
 				++FP_MULT_FU_USED;
-				RESULT[num - 1][EXE] = CYCLE;
-				INSTRS[num - 1]->state = EXE;
+				RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+				INSTRS[num - 1].state = EXE;
 				return TRUE;
 			}
 			else
@@ -1003,8 +1003,8 @@ int execute(struct instr **INSTRS, int num)
 				{
 					// std::cout << "debuging here *********************22222" << std::endl;
 					++FP_MULT_FU_USED;
-					RESULT[num - 1][EXE] = CYCLE;
-					INSTRS[num - 1]->state = EXE;
+					RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+					INSTRS[num - 1].state = EXE;
 					return TRUE;
 				}
 				else
@@ -1022,8 +1022,8 @@ int execute(struct instr **INSTRS, int num)
 				{
 					// std::cout << "debuging here *********************22222" << std::endl;
 					++FP_ADDER_FU_USED;
-					RESULT[num - 1][EXE] = CYCLE;
-					INSTRS[num - 1]->state = EXE;
+					RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+					INSTRS[num - 1].state = EXE;
 					return TRUE;
 				}
 				else
@@ -1038,8 +1038,8 @@ int execute(struct instr **INSTRS, int num)
 				if (value_available_in_vj_or_qj(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 				{
 					++INTEGER_FU_USED;
-					RESULT[num - 1][EXE] = CYCLE;
-					INSTRS[num - 1]->state = EXE;
+					RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+					INSTRS[num - 1].state = EXE;
 					return TRUE;
 				}
 				else
@@ -1064,8 +1064,8 @@ int execute(struct instr **INSTRS, int num)
 						// std::cout << "debuging here *********************22222" << std::endl;
 						std::cout << "op is: " << op << "	" << "INTEGER_FU_USED is: " << INTEGER_FU_USED << std::endl;
 						++INTEGER_FU_USED;
-						RESULT[num - 1][EXE] = CYCLE;
-						INSTRS[num - 1]->state = EXE;
+						RESULT[INSTRS[num - 1].num - 1][EXE] = CYCLE;
+						INSTRS[num - 1].state = EXE;
 						return TRUE;
 					}
 					else
@@ -1090,16 +1090,16 @@ void move_to_pipeline_do_nothing()
 	// std::cout << RESULT[5][0] << "*************^^^^^^^^^^^^^^" << std::endl;
 }
 
-int memory(struct instr **INSTRS, int num)
+int memory(std::vector<struct instr>& INSTRS, int num)
 {
-	std::string ins = INSTRS[num - 1]->_ins;
+	std::string ins = INSTRS[num - 1]._ins;
 	if (ins.find("Ld") == 0 || ins.find("Sd") == 0)
 	{
-		if (RESULT[num - 1][EXE] != 0)
+		if (RESULT[INSTRS[num - 1].num - 1][EXE] != 0)
 		{
 			std::cout << "Instruction " << num << " memory begin" << std::endl;
-			RESULT[num - 1][MEMORY] = CYCLE;
-			INSTRS[num - 1]->state = MEMORY;
+			RESULT[INSTRS[num - 1].num - 1][MEMORY] = CYCLE;
+			INSTRS[num - 1].state = MEMORY;
 			--LS_FU_USED;
 			return TRUE;
 		}
@@ -1111,15 +1111,15 @@ int memory(struct instr **INSTRS, int num)
 	}
 	else
 	{
-		if (RESULT[num - 1][EXE] != 0)
+		if (RESULT[INSTRS[num - 1].num - 1][EXE] != 0)
 		{
-			int need = INSTRS[num - 1]->cycle_need;
-			int exe_begin = RESULT[num - 1][EXE];
+			int need = INSTRS[num - 1].cycle_need;
+			int exe_begin = RESULT[INSTRS[num - 1].num - 1][EXE];
 			if (CYCLE - exe_begin == need)
 			{
-				RESULT[num - 1][MEMORY] = RESULT[num - 1][EXE];
+				RESULT[INSTRS[num - 1].num - 1][MEMORY] = RESULT[INSTRS[num - 1].num - 1][EXE];
 				std::cout << "Instruction " << num << " skip memory" << std::endl;
-				INSTRS[num - 1]->state = MEMORY;
+				INSTRS[num - 1].state = MEMORY;
 				write_back(INSTRS, num);
 				return TRUE;
 			}
@@ -1137,34 +1137,34 @@ int memory(struct instr **INSTRS, int num)
 	}
 }
 
-void lock_storing_address(struct instr **INSTRS, int num)
+void lock_storing_address(std::vector<struct instr>& INSTRS, int num)
 {
 	int address = cal_addr(INSTRS, num);
 	std::pair<int, int> the_pair (address, TRUE);
 	MEMORY_LOCK.insert(the_pair);
 }
 
-int write_back(struct instr **INSTRS, int num)
+int write_back(std::vector<struct instr>& INSTRS, int num)
 {
-	std::string ins = INSTRS[num - 1]->_ins;
+	std::string ins = INSTRS[num - 1]._ins;
 	std::vector<std::string> elems;
 	pro_instr(ins, elems);
 	std::string op = elems[0];
 	std::string operant1 = elems[1];
 	if (ins.find("Ld") == 0)
 	{
-	    if (RESULT[num - 1][MEMORY] != 0)
+	    if (RESULT[INSTRS[num - 1].num - 1][MEMORY] != 0)
 	    {
-	        int need = INSTRS[num - 1]->cycle_need;
-	        int mem_begin = RESULT[num - 1][MEMORY];
+	        int need = INSTRS[num - 1].cycle_need;
+	        int mem_begin = RESULT[INSTRS[num - 1].num - 1][MEMORY];
 	        if (CYCLE - mem_begin == need)
 	        {
-	            RESULT[num - 1][WB] = CYCLE;
+	            RESULT[INSTRS[num - 1].num - 1][WB] = CYCLE;
 	            float res = do_instr_cal(INSTRS, num);
 	            // reset_rat(operant1);
 	            clear_rs_entry(num, LOAD_STORE_UNIT);
 	            std::cout << "Instruction " << num << " write back" << std::endl;
-	            INSTRS[num - 1]->state = WB;
+	            INSTRS[num - 1].state = WB;
 	            /* update ROB */
 	            return TRUE;
 	        }
@@ -1182,18 +1182,18 @@ int write_back(struct instr **INSTRS, int num)
 	}
 	else if (ins.find("Sd") == 0)
 	{
-		if (RESULT[num - 1][MEMORY] != 0)
+		if (RESULT[INSTRS[num - 1].num - 1][MEMORY] != 0)
 		{
-			int need = INSTRS[num - 1]->cycle_need;
-			int mem_begin = RESULT[num - 1][MEMORY];
+			int need = INSTRS[num - 1].cycle_need;
+			int mem_begin = RESULT[INSTRS[num - 1].num - 1][MEMORY];
 			if (CYCLE - mem_begin == need)
 			{
-				RESULT[num - 1][WB] = CYCLE;
+				RESULT[INSTRS[num - 1].num - 1][WB] = CYCLE;
 				// float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
 				// clear_rs_entry(num, LOAD_STORE_UNIT);
 				std::cout << "Instruction " << num << " write back" << std::endl;
-				INSTRS[num - 1]->state = WB;
+				INSTRS[num - 1].state = WB;
 				/* update ROB */
 				return TRUE;
 			}
@@ -1211,32 +1211,32 @@ int write_back(struct instr **INSTRS, int num)
 	}
 	else if (ins.find("Bne") == 0 || ins.find("Beq") == 0)
 	{
-		if (RESULT[num - 1][MEMORY] == 0)
+		if (RESULT[INSTRS[num - 1].num - 1][MEMORY] == 0)
 		{
 			std::cout << "Instruction " << num << "not memory" << std::endl;
 			return FALSE; 
 		}
 		else
 		{
-			RESULT[num - 1][WB] = CYCLE;
+			RESULT[INSTRS[num - 1].num - 1][WB] = CYCLE;
 			--INTEGER_FU_USED;
 			std::cout << "Instruction " << num << " write back" << std::endl;
-			ROB[atoi(INTEGER_ADDER_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY.substr(3, 1).c_str()) - 1]->finish = TRUE;
-			INSTRS[num - 1]->state = WB;
+			ROB[atoi(INTEGER_ADDER_RS[INSTRS[num - 1].in_rs]->ROB_ENTRY.substr(3, 1).c_str()) - 1]->finish = TRUE;
+			INSTRS[num - 1].state = WB;
 			clear_rs_entry(num, INTEGER_ADDER);
 			return TRUE;
 		}
 	}
 	else
 	{
-		if (RESULT[num - 1][MEMORY] == 0)
+		if (RESULT[INSTRS[num - 1].num - 1][MEMORY] == 0)
 		{
 			std::cout << "Instruction " << num << "not memory" << std::endl;
 			return FALSE;
 		}
 		else
 		{
-			RESULT[num - 1][WB] = CYCLE;
+			RESULT[INSTRS[num - 1].num - 1][WB] = CYCLE;
 			float res1 = do_instr_cal(INSTRS, num);
 			if (ins.find("Mult.d") == 0)
 			{
@@ -1257,16 +1257,16 @@ int write_back(struct instr **INSTRS, int num)
 				clear_rs_entry(num, INTEGER_ADDER);
 			}
 			std::cout << "Instruction " << num << " write back" << std::endl;
-			INSTRS[num - 1]->state = WB;
+			INSTRS[num - 1].state = WB;
 			return TRUE;
 		}
 	}
 }
 
-float do_instr_cal(struct instr **INSTRS, int num)
+float do_instr_cal(std::vector<struct instr>& INSTRS, int num)
 {
 	std::vector<std::string> elems;
-	pro_instr(INSTRS[num - 1]->_ins, elems);
+	pro_instr(INSTRS[num - 1]._ins, elems);
 	std::string op = elems[0];
 	std::string operant1 = elems[1];
 	std::string operant2 = elems[2];
@@ -1281,24 +1281,24 @@ float do_instr_cal(struct instr **INSTRS, int num)
 	else if (op.find("Sd") == 0)
 	{
 		int address = cal_addr(INSTRS, num);
-		if (LS_RS[INSTRS[num - 1]->in_rs]->VJ != EMPTY)
+		if (LS_RS[INSTRS[num - 1].in_rs]->VJ != EMPTY)
 		{
 			if (MEM.find(address) != MEM.end())
 			{
-				MEM[address] = LS_RS[INSTRS[num - 1]->in_rs]->VJ;
-				return LS_RS[INSTRS[num - 1]->in_rs]->VJ;
+				MEM[address] = LS_RS[INSTRS[num - 1].in_rs]->VJ;
+				return LS_RS[INSTRS[num - 1].in_rs]->VJ;
 			}
 			else
 			{
-				std::pair<int, float> the_pair (address, LS_RS[INSTRS[num - 1]->in_rs]->VJ);
+				std::pair<int, float> the_pair (address, LS_RS[INSTRS[num - 1].in_rs]->VJ);
 				MEM.insert(the_pair);
 				JUST_COMMIT_ADDR.push_back(address);
-				return LS_RS[INSTRS[num - 1]->in_rs]->VJ;
+				return LS_RS[INSTRS[num - 1].in_rs]->VJ;
 			}
 		}
 		else
 		{
-			float res = ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+			float res = ROB[atoi(LS_RS[INSTRS[num - 1].in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
 			if (MEM.find(address) != MEM.end())
 			{
 				MEM[address] = res;
@@ -1316,7 +1316,7 @@ float do_instr_cal(struct instr **INSTRS, int num)
 	{
 		float val_j, val_k;
 		std::string operant3 = elems[3];
-		int _in_rs = INSTRS[num - 1]->in_rs;
+		int _in_rs = INSTRS[num - 1].in_rs;
 		if (op.find("Mult.d") == 0)
 		{
 			if (FP_MULT_RS[_in_rs]->VJ != EMPTY)
@@ -1453,7 +1453,7 @@ void reset_rat(std::string operant)
 
 void clear_rs_entry(int num, int type)
 {
-	int loc = INSTRS[num - 1]->in_rs;
+	int loc = INSTRS[num - 1].in_rs;
 	if (type == INTEGER_ADDER)
 	{
 		INTEGER_ADDER_RS[loc]->BUSY = FALSE;
@@ -1504,9 +1504,9 @@ void clear_rs_entry(int num, int type)
 	}
 }
 
-int run_to_state(struct instr **INSTRS, int num)
+int run_to_state(std::vector<struct instr>& INSTRS, int num)
 {
-	int state = INSTRS[num - 1]->state;
+	int state = INSTRS[num - 1].state;
 	int result;
 	if (state == -1)
 	{
@@ -1521,9 +1521,12 @@ int run_to_state(struct instr **INSTRS, int num)
 		result = execute(INSTRS, num);
 		if (result == TRUE)
 			std::cout << "Instruction " << num << " doing execute " << std::endl;
-		if (INSTRS[num - 1]->_ins.compare("Bne") == 0 || INSTRS[num - 1]->_ins.compare("Beq") == 0)
+
+		// std::cout << INSTRS[num - 1]->_ins.compare("Bne") << std::endl;
+		if (INSTRS[num - 1]._ins.find("Bne") == 0 || INSTRS[num - 1]._ins.find("Beq") == 0)
 		{
-			if (branch_resolved(num) == TRUE)
+			// std::cout << "here for debug" << std::endl;
+			if (branch_resolved(INSTRS[num - 1].num) == TRUE)
 				std::cout << "branch resolved, do jumping ********" << std::endl;
 		}
 
@@ -1531,9 +1534,9 @@ int run_to_state(struct instr **INSTRS, int num)
 	else if (state == EXE)
 	{
 		/* for branch */
-		if (INSTRS[num - 1]->_ins.compare("Bne") == 0 || INSTRS[num - 1]->_ins.compare("Beq") == 0)
+		if (INSTRS[num - 1]._ins.find("Bne") == 0 || INSTRS[num - 1]._ins.find("Beq") == 0)
 		{
-			if (branch_resolved(num) == TRUE)
+			if (branch_resolved(INSTRS[num - 1].num) == TRUE)
 				std::cout << "branch resolved, do jumping ********" << std::endl;
 		}
 		// std::cout << "Instruction " << num << " asking for memory" << std::endl;
@@ -1558,61 +1561,61 @@ int run_to_state(struct instr **INSTRS, int num)
 	return result;
 }
 
-int commit(struct instr **INSTRS, int num)
+int commit(std::vector<struct instr>& INSTRS, int num)
 {
-	if (INSTRS[num - 1]->has_committed == TRUE)
+	if (INSTRS[num - 1].has_committed == TRUE)
 		return TRUE;
 	else
 	{
-		if ((INSTRS[num - 1]->_ins).find("Sd") == 0)
+		if ((INSTRS[num - 1]._ins).find("Sd") == 0)
 		{
 			// float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
 				// clear_rs_entry(num, LOAD_STORE_UNIT);
 			int address = cal_addr(INSTRS, num);
 			MEMORY_LOCK.erase(address);
-			if (RESULT[num - 1][WB] != 0 && num == CAN_COMMIT && commit_is_lock == FALSE)
+			if (RESULT[INSTRS[num - 1].num - 1][WB] != 0 && num == CAN_COMMIT && commit_is_lock == FALSE)
 			{
 				float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
 
-				ROB[atoi(LS_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY.substr(3, 1).c_str())- 1]->finish = TRUE;
+				ROB[atoi(LS_RS[INSTRS[num - 1].in_rs]->ROB_ENTRY.substr(3, 1).c_str())- 1]->finish = TRUE;
 				clear_rs_entry(num, LOAD_STORE_UNIT);
 				commit_is_lock = TRUE;
-				RESULT[num - 1][COMMIT] = CYCLE;
+				RESULT[INSTRS[num - 1].num - 1][COMMIT] = CYCLE;
 				std::pair<int, int> the_pair (num, TRUE);
 				HAS_COMMIT.insert(the_pair);
 				HAS_COMMIT[num] = TRUE;
-				INSTRS[num - 1]->has_committed = TRUE;
+				INSTRS[num - 1].has_committed = TRUE;
 				++CAN_COMMIT;
 				std::cout << "Instruction " << num << " commit" << std::endl;
 				return TRUE;
 			}
 		}
-		if ((INSTRS[num - 1]->_ins).find("Bne") == 0 || (INSTRS[num - 1]->_ins).find("Beq") == 0)
+		if ((INSTRS[num - 1]._ins).find("Bne") == 0 || (INSTRS[num - 1]._ins).find("Beq") == 0)
 		{
 			if (num == CAN_COMMIT && commit_is_lock == FALSE)
 			{
 				commit_is_lock = TRUE;
-				RESULT[num - 1][COMMIT] = CYCLE;
+				RESULT[INSTRS[num - 1].num - 1][COMMIT] = CYCLE;
 				std::pair<int, int> the_pair (num, TRUE);
 				HAS_COMMIT.insert(the_pair);
-				INSTRS[num - 1]->has_committed = TRUE;
+				INSTRS[num - 1].has_committed = TRUE;
 				++CAN_COMMIT;
 				std::cout << "Instruction " << num << " commit" << std::endl;
 				return TRUE;
 			}	
 		}
-		if (RESULT[num - 1][WB] != 0 && num == CAN_COMMIT && commit_is_lock == FALSE)
+		if (RESULT[INSTRS[num - 1].num - 1][WB] != 0 && num == CAN_COMMIT && commit_is_lock == FALSE)
 		{
 			if (ROB[num - 1]->finish == TRUE)
 			{
 				commit_is_lock = TRUE;
-				RESULT[num - 1][COMMIT] = CYCLE;
+				RESULT[INSTRS[num - 1].num - 1][COMMIT] = CYCLE;
 				std::pair<int, int> the_pair (num, TRUE);
 				HAS_COMMIT.insert(the_pair);
 				HAS_COMMIT[num] = TRUE;
-				INSTRS[num - 1]->has_committed = TRUE;
+				INSTRS[num - 1].has_committed = TRUE;
 				++CAN_COMMIT;
 				std::cout << "Instruction " << num << " commit" << std::endl;
 				return TRUE;
@@ -1676,9 +1679,9 @@ void refresh_value()
 {
 	for (int i = 0 ; i < ROB_SIZE; ++i)
 	{
-		if (ROB[i]->finish == TRUE && ROB[i]->dest.compare("") != 0 && 
-			ROB[i]->finish == TRUE && ROB[i]->dest.compare("Bne") != 0 &&
-			ROB[i]->finish == TRUE && ROB[i]->dest.compare("Beq") != 0)
+		if (ROB[i]->finish == TRUE && ROB[i]->dest != "" && 
+			ROB[i]->finish == TRUE && ROB[i]->dest != "Bne" &&
+			ROB[i]->finish == TRUE && ROB[i]->dest != "Beq")
 		{
 			if (ARF.find(ROB[i]->dest) != ARF.end())  /* need to update value in ARF */
 			{
@@ -1764,8 +1767,8 @@ void run_simulator()
 				result = run_to_state(INSTRS, loop);
 			}
 		}
-		// if (HAS_COMMIT[INS_NUM] == TRUE)
-		if (CYCLE == 4)
+		if (HAS_COMMIT[INS_NUM] == TRUE)
+		// if (CYCLE == 4)
 		{
 			// std::cout << "LS_RS_USED is: " << LS_RS_USED << std::endl;
 			refresh_value();
