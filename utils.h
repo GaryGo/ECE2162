@@ -190,6 +190,26 @@ std::vector<int> JUST_COMMIT_ADDR;
  */
 std::unordered_map<int, int> MEMORY_LOCK;
 
+/**
+ *  used FU of Integer adder
+ */
+static int INTEGER_FU_USED = 0;
+
+/**
+ *  used FU of FP adder
+ */
+static int FP_ADDER_FU_USED = 0;
+
+/**
+ *  used FU of FP multiplier
+ */
+static int FP_MULT_FU_USED = 0;
+
+/**
+ *  used FU of Load/Store unit
+ */
+static int LS_FU_USED = 0;
+
 /****************************************************************************************
  *     								              Structure Definition                                *
  ****************************************************************************************/
