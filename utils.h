@@ -210,6 +210,16 @@ static int FP_MULT_FU_USED = 0;
  */
 static int LS_FU_USED = 0;
 
+/**
+ *  row number that the result should be inserted now
+ */
+static int RESULT_NOW_ROW = 0;
+
+/**
+ *  row anchor for each instruction, which is a map
+ */
+static std::unordered_map<int, std::vector<int> > INSTRS_ANCHOR;
+
 /****************************************************************************************
  *     								              Structure Definition                                *
  ****************************************************************************************/
@@ -519,7 +529,14 @@ print_just_commit_addr();
 /**
  *  lock storing memory address
  */
-void lock_storing_address(struct instr **INSTRS, int num);
+void 
+lock_storing_address(struct instr **INSTRS, int num);
+
+/**
+ *  determine whether a branch has been resolved
+ */
+int 
+branch_resolved(int num);
 
 // Sd F6, 0(R2)
 // Add R1, R1, R2

@@ -330,7 +330,26 @@ int fetch_ins(const std::string ins, int order)
 	}
 	else if (op == "Beq" || op == "Bne")
 	{
-
+		std::string operant3 = elems[3];
+		j = CONS_MAP[INTEGER_ADDER][NUM_RS];
+		for (i = 0; i < j; ++i)
+		{
+			if (INTEGER_ADDER_RS[i]->BUSY == FALSE)
+			{
+				INTEGER_ADDER_RS[i]->BUSY = TRUE;
+				INTEGER_ADDER_RS[i]->OP = op;
+				INTEGER_ADDER_RS[i]->ROB_ENTRY = "ROB" + std::to_string(ROB_NOW_NUM);
+				// std::cout << "fetch lalallal " << INTEGER_ADDER_RS[i]->ROB_ENTRY << std::endl;
+				set_operant(operant1, 0, i, 1);
+				set_operant(operant2, 0, i, 2);
+				INTEGER_ADDER_RS[i]->A = atoi(operant3.c_str());
+				update_rat_rob(op);
+				INSTRS[order - 1]->in_rs = i;
+				has_fetch = TRUE;
+				++INTEGER_ADDER_RS_USED;
+				break;
+			}
+		}
 	}
 	else
 	{
@@ -950,6 +969,21 @@ int execute(struct instr **INSTRS, int num)
 				return FALSE;
 			}
 		}
+		else if ((op.compare("Bne") == 0 || op.compare("Beu") == 0) && INTEGER_FU_USED < CONS_MAP[INTEGER_ADDER][NUM_FUS])
+		{
+			if (value_available_in_vj_or_qj(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end() &&
+					value_available_in_vk_or_qk(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
+			{
+				++FP_MULT_FU_USED;
+				RESULT[num - 1][EXE] = CYCLE;
+				INSTRS[num - 1]->state = EXE;
+				return TRUE;
+			}
+			else
+			{
+				return FALSE;
+			}
+		}
 		else
 		{
 			std::string operant3 = elems[3];
@@ -1175,6 +1209,24 @@ int write_back(struct instr **INSTRS, int num)
 			return FALSE;
 		}
 	}
+	else if (ins.find("Bne") == 0 || ins.find("Beq") == 0)
+	{
+		if (RESULT[num - 1][MEMORY] == 0)
+		{
+			std::cout << "Instruction " << num << "not memory" << std::endl;
+			return FALSE; 
+		}
+		else
+		{
+			RESULT[num - 1][WB] = CYCLE;
+			--INTEGER_FU_USED;
+			std::cout << "Instruction " << num << " write back" << std::endl;
+			ROB[atoi(INTEGER_ADDER_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY.substr(3, 1).c_str()) - 1]->finish = TRUE;
+			INSTRS[num - 1]->state = WB;
+			clear_rs_entry(num, INTEGER_ADDER);
+			return TRUE;
+		}
+	}
 	else
 	{
 		if (RESULT[num - 1][MEMORY] == 0)
@@ -1374,6 +1426,18 @@ float do_instr_cal(struct instr **INSTRS, int num)
 	}
 }
 
+int branch_resolved(int num)
+{
+	int ex_begin = RESULT[num - 1][EXE];
+	int need = CONS_MAP[INTEGER_ADDER][CYCLE_EX];
+	if (CYCLE == (ex_begin + need - 1))
+	{
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
 void update_rob_value(int num, float res)
 {
 	ROB[num - 1]->value = res;
@@ -1457,9 +1521,21 @@ int run_to_state(struct instr **INSTRS, int num)
 		result = execute(INSTRS, num);
 		if (result == TRUE)
 			std::cout << "Instruction " << num << " doing execute " << std::endl;
+		if (INSTRS[num - 1]->_ins.compare("Bne") == 0 || INSTRS[num - 1]->_ins.compare("Beq") == 0)
+		{
+			if (branch_resolved(num) == TRUE)
+				std::cout << "branch resolved, do jumping ********" << std::endl;
+		}
+
 	}
 	else if (state == EXE)
 	{
+		/* for branch */
+		if (INSTRS[num - 1]->_ins.compare("Bne") == 0 || INSTRS[num - 1]->_ins.compare("Beq") == 0)
+		{
+			if (branch_resolved(num) == TRUE)
+				std::cout << "branch resolved, do jumping ********" << std::endl;
+		}
 		// std::cout << "Instruction " << num << " asking for memory" << std::endl;
 		result = memory(INSTRS, num);
 		// if (result == TRUE)
@@ -1513,6 +1589,20 @@ int commit(struct instr **INSTRS, int num)
 				return TRUE;
 			}
 		}
+		if ((INSTRS[num - 1]->_ins).find("Bne") == 0 || (INSTRS[num - 1]->_ins).find("Beq") == 0)
+		{
+			if (num == CAN_COMMIT && commit_is_lock == FALSE)
+			{
+				commit_is_lock = TRUE;
+				RESULT[num - 1][COMMIT] = CYCLE;
+				std::pair<int, int> the_pair (num, TRUE);
+				HAS_COMMIT.insert(the_pair);
+				INSTRS[num - 1]->has_committed = TRUE;
+				++CAN_COMMIT;
+				std::cout << "Instruction " << num << " commit" << std::endl;
+				return TRUE;
+			}	
+		}
 		if (RESULT[num - 1][WB] != 0 && num == CAN_COMMIT && commit_is_lock == FALSE)
 		{
 			if (ROB[num - 1]->finish == TRUE)
@@ -1534,6 +1624,12 @@ int commit(struct instr **INSTRS, int num)
 
 void update_rat_rob(std::string operant)
 {
+	if (operant.find("Bne") == 0 || operant.find("Beq") == 0)
+	{
+		ROB[ROB_NOW_NUM - 1]->dest = operant;
+		++ROB_NOW_NUM;
+		return;
+	}
 	ROB[ROB_NOW_NUM - 1]->dest = operant;
 	if (RAT.find(operant) == RAT.end())
 	{
@@ -1580,7 +1676,9 @@ void refresh_value()
 {
 	for (int i = 0 ; i < ROB_SIZE; ++i)
 	{
-		if (ROB[i]->finish == TRUE && ROB[i]->dest.compare("") != 0)
+		if (ROB[i]->finish == TRUE && ROB[i]->dest.compare("") != 0 && 
+			ROB[i]->finish == TRUE && ROB[i]->dest.compare("Bne") != 0 &&
+			ROB[i]->finish == TRUE && ROB[i]->dest.compare("Beq") != 0)
 		{
 			if (ARF.find(ROB[i]->dest) != ARF.end())  /* need to update value in ARF */
 			{
@@ -1666,7 +1764,8 @@ void run_simulator()
 				result = run_to_state(INSTRS, loop);
 			}
 		}
-		if (HAS_COMMIT[INS_NUM] == TRUE)
+		// if (HAS_COMMIT[INS_NUM] == TRUE)
+		if (CYCLE == 4)
 		{
 			// std::cout << "LS_RS_USED is: " << LS_RS_USED << std::endl;
 			refresh_value();
