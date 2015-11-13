@@ -6,6 +6,7 @@
 #include <functional>
 #include <sstream>
 #include <unordered_map>
+#include <queue>
 
 
 #define INTEGER_ADDER 		0   	/* Integer adder */
@@ -86,7 +87,7 @@ static int CYCLE = 1;
 /**
  *  reslut table
  */
-static int **RESULT;
+static int RESULT[100][5];
 /*
 	RESULT = new int*[number of instructions];
 	for (int i = 0; i < num of ins; ++i)
@@ -191,9 +192,14 @@ std::unordered_map<std::string, int> TEM_REG_LOCKER;
 std::vector<int> JUST_COMMIT_ADDR;
 
 /**
- *  memory lock address map
+ *  memory lock address map for known address
  */
-std::unordered_map<int, int> MEMORY_LOCK;
+std::unordered_map<std::string, int> MEMORY_LOCK;
+
+// *
+//  *  memory lock address for not known address (REG)
+ 
+// std::unordered_map<std::string, int> MEMORY_LOCK_REG;
 
 /**
  *  used FU of Integer adder
@@ -224,6 +230,17 @@ static int RESULT_NOW_ROW = 0;
  *  row anchor for each instruction, which is a map
  */
 static std::unordered_map<int, std::vector<int> > INSTRS_ANCHOR;
+
+/**
+ *  instruction queue
+ */
+static std::vector<struct instr> INS_QUEUE;
+
+/**
+ *  instruction number that should push into queue
+ */
+static int TO_PUSH_INTO_QUEUE = 1;
+
 
 /****************************************************************************************
  *     								              Structure Definition                                *
@@ -258,6 +275,7 @@ static std::unordered_map<int, std::vector<int> > INSTRS_ANCHOR;
  	int num;
  	int in_rs;
  	int state;
+  int inQ;
  };
 
  /**
@@ -329,7 +347,7 @@ init_all();
  *  fetching an instruction, line 226
  */
 int
-fetch_ins(const std::string ins, int order);
+fetch_ins(struct instr& INS);
 
 /**
  *  calculate address, line 350
@@ -341,7 +359,7 @@ cal_addr(std::string operant);
  *  When load and store, whether the address is ready, line 365
  */
 int
-addr_ready(std::vector<struct instr>& INSTRS, int num);
+addr_ready(struct instr& INS);
 
 /**
  *  set operant into RS, 0 for Integer adder, 1 for FP adder, 2 for FP multiplier
@@ -373,25 +391,25 @@ init_instructions();
  *  check whether rs is available for INSTRS[num]. line 604
  */
 int
-check_rs_available(std::vector<struct instr>& INSTRS, int num);
+check_rs_available(struct instr& INS);
 
 /**
  *  issue an instruction, return TURE or FALSE, line 639
  */
 int
-issue(std::vector<struct instr>& INSTRS, int num);
+issue(struct instr& INS);
 
 /**
  *  value available in arf, return TRUE or FALSE, line 676
  */
 int
-value_available_in_vj_or_qj(std::vector<struct instr>& INSTRS, int num);
+value_available_in_vj_or_qj(struct instr& INS);
 
 /**
  *  value available in RAT and ROB, line 683
  */
 int
-value_available_in_vk_or_qk(std::vector<struct instr>& INSTRS, int num);
+value_available_in_vk_or_qk(struct instr& INS);
 
 /**
  *  find first operant in instruction, line 696
@@ -403,31 +421,31 @@ first_operant(std::string ins);
  *  execute an instruction, return TRUE or FALSE, line 704
  */
 int
-execute(std::vector<struct instr>& INSTRS, int num);
+execute(struct instr& INS);
 
 /**
  *  move the SHOULD_FETCH instruction into pipeline, line 767
  */
 void
-move_to_pipeline_do_nothing();
+move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num);
 
 /**
  *  do memory part, line 773
  */
 int
-memory(std::vector<struct instr>& INSTRS, int num);
+memory(struct instr& INS);
 
 /**
  *  write back, line 818
  */
 int
-write_back(std::vector<struct instr>& INSTRS, int num);
+write_back(struct instr& INS);
 
 /**
  *  do the instruction calculation, line 886
  */
 float
-do_instr_cal(std::vector<struct instr>& INSTRS, int num);
+do_instr_cal(struct instr& INS);
 
 /**
  *  clear RS entry, line 944
@@ -439,13 +457,13 @@ clear_rs_entry(int num, int type);
  *  run an instruction in a certain state, line 999
  */
 int
-run_to_state(std::vector<struct instr>& INSTRS, int num);
+run_to_state(struct instr& INS);
 
 /**
  *  commit an instruction, line 1041
  */
 int
-commit(std::vector<struct instr>& INSTRS, int num);
+commit(struct instr& INS);
 
 /**
  *  update RAT and ROB together, line 1060
@@ -535,13 +553,37 @@ print_just_commit_addr();
  *  lock storing memory address
  */
 void 
-lock_storing_address(std::vector<struct instr>& INSTRS, int num);
+lock_storing_address(struct instr& INS);
 
 /**
  *  determine whether a branch has been resolved
  */
 int 
 branch_resolved(int num);
+
+/**
+ *  calculate the address to which the branch will jump
+ */
+int 
+cal_branch_addr(struct instr& INS);
+
+/**
+ *  print all static value for debugging
+ */
+void 
+print_static_value();
+
+/**
+ *  print an instruction for debugging
+ */
+void
+print_instr(struct instr INS);
+
+/**
+ *  release after store commit
+ */
+void
+release_after_store_commit(struct instr INS);
 
 // Sd F6, 0(R2)
 // Add R1, R1, R2
