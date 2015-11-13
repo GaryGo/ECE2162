@@ -347,6 +347,7 @@ int fetch_ins(struct instr& INS)
 				INS.in_rs = i;
 				has_fetch = TRUE;
 				++INTEGER_ADDER_RS_USED;
+				branch_stall = TRUE;
 				break;
 			}
 		}
@@ -988,7 +989,7 @@ int execute(struct instr& INS)
 				if (value_available_in_vj_or_qj(INS) == TRUE && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end() &&
 						value_available_in_vk_or_qk(INS) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 				{
-					++FP_MULT_FU_USED;
+					++INTEGER_FU_USED;
 					RESULT[INS.inQ - 1][EXE] = CYCLE;
 					INS.state = EXE;
 					return TRUE;
@@ -1013,8 +1014,11 @@ int execute(struct instr& INS)
 
 			if (op.find("Mult.d") == 0)
 			{
+				std::cout << "debugging here ********7 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+				std::cout << FP_MULT_FU_USED << std::endl;
 				if (FP_MULT_FU_USED < CONS_MAP[FP_MULTIPLIER][NUM_FUS])
 				{
+					std::cout << "debugging here ********7 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 					// if ((FP_MULT_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY).compare(ROB[RAT[operant1] - 1]->rob_name) == 0 &&
 					// 	value_available_in_vj_or_qj(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end() &&
 					// 	value_available_in_vk_or_qk(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant3) == TEM_REG_LOCKER.end())
@@ -1113,6 +1117,11 @@ int execute(struct instr& INS)
 
 void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 {
+	if (branch_stall == TRUE)
+	{
+		std::cout << "Branch stall, wait to solve the branch" << std::endl;
+		return;
+	}
 	if (num > INS_NUM)
 	{
 		std::cout << "No Instruction to be issued" << std::endl;
@@ -1593,10 +1602,12 @@ int run_to_state(struct instr& INS)
 				{
 					std::cout << "dump to the instruction " << cal_branch_addr(INS) << std::endl;
 					TO_PUSH_INTO_QUEUE = cal_branch_addr(INS);
+					branch_stall = FALSE;
 				}
 				else
 				{
 					std::cout << "skip the branch" << std::endl;
+					branch_stall = FALSE;
 				}
 			}
 		}
@@ -1870,23 +1881,23 @@ void run_simulator()
 			result = run_to_state(INS_QUEUE[loop]);
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 		}
-		// if (CYCLE == 12)
+		// if (CYCLE == 51)
 		if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE)
 		{
 			// std::cout << "debugging********* " << INS_QUEUE[INS_QUEUE.size() - 1].has_committed << std::endl;
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 			refresh_value();
-			// print_rat();
-			// print_rob();
+			print_rat();
+			print_rob();
 			print_memory();
-			// print_rs();
+			print_rs();
 			print_arf();
 			print_result();
-			// print_memory_lock();
-			// print_just_commit_addr();
+			print_memory_lock();
+			print_just_commit_addr();
 			
-			// print_static_value();
-			// print_tem_reg_locker();
+			print_static_value();
+			print_tem_reg_locker();
 			
 			// print_instr(INS_QUEUE[1]);
 			break;
@@ -1962,6 +1973,7 @@ void print_static_value()
 	std::cout << "SHOULD_FETCH: " << "	" << SHOULD_FETCH << std::endl;
 	std::cout << "CAN_COMMIT: " << "	" << CAN_COMMIT << std::endl;
 	std::cout << "TO_PUSH_INTO_QUEUE: " << "	" << TO_PUSH_INTO_QUEUE << std::endl;
+	std::cout << "branch stall: " << "	" << branch_stall << std::endl;
 	std::cout << "**************************************" << std::endl;
 	std::cout << std::endl;
 }

@@ -241,6 +241,11 @@ static std::vector<struct instr> INS_QUEUE;
  */
 static int TO_PUSH_INTO_QUEUE = 1;
 
+/**
+ *  branch stall flag
+ */
+static int branch_stall = FALSE;
+
 
 /****************************************************************************************
  *     								              Structure Definition                                *
