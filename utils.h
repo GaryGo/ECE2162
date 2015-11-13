@@ -585,6 +585,12 @@ print_instr(struct instr INS);
 void
 release_after_store_commit(struct instr INS);
 
+/**
+ *  print tem_reg_lock
+ */
+void
+print_tem_reg_locker();
+
 // Sd F6, 0(R2)
 // Add R1, R1, R2
 // Add R2, R2, R2
