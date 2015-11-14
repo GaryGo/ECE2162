@@ -308,7 +308,7 @@ int fetch_ins(struct instr& INS)
 				}
 				std::pair<std::string, int> the_pair (operant2, TRUE);
 				MEMORY_LOCK.insert(the_pair);
-				std::cout << "debugging here ************** " << operant2 << " locked" << std::endl;
+				// std::cout << "debugging here ************** " << operant2 << " locked" << std::endl;
 
 				if (RAT.find(operant1) == RAT.end())
 				{
@@ -358,6 +358,7 @@ int fetch_ins(struct instr& INS)
 		/* three situation.  (Add, Addi, Sub), (Add.d, Sub.d), (Mul.d) */
 		if (op == "Addi")
 		{
+			integer_adder_stall = TRUE;
 			j = CONS_MAP[INTEGER_ADDER][NUM_RS];
 			for (i = 0; i < j; ++i)
 			{
@@ -452,7 +453,7 @@ int cal_addr(struct instr& INS)
 	}
 	else
 	{
-		res = int(ROB[atoi(LS_RS[INS.in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INS.in_rs]->VK);
+		res = int(ROB[atoi(LS_RS[INS.in_rs]->QK.substr(3).c_str()) - 1]->value + LS_RS[INS.in_rs]->VK);
 		return res;
 	}
 }
@@ -480,9 +481,9 @@ int addr_ready(struct instr& INS)
 		else
 			return FALSE;
 	}
-	else if (ROB[atoi(LS_RS[INS.in_rs]->QK.substr(3, 1).c_str()) - 1]->finish == TRUE && TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end())
+	else if (ROB[atoi(LS_RS[INS.in_rs]->QK.substr(3).c_str()) - 1]->finish == TRUE && TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end())
 	{
-		int address = int(ROB[atoi(LS_RS[INS.in_rs]->QK.substr(3, 1).c_str()) - 1]->value + LS_RS[INS.in_rs]->VK);
+		int address = int(ROB[atoi(LS_RS[INS.in_rs]->QK.substr(3).c_str()) - 1]->value + LS_RS[INS.in_rs]->VK);
 		if (store_memory_just_commit(address) == FALSE)
 			return TRUE;
 		else return FALSE;
@@ -814,7 +815,7 @@ int value_available_in_vk_or_qk(struct instr& INS)
 			return TRUE;
 		else
 		{
-			int _in_rob = atoi(FP_MULT_RS[_in_rs]->QK.substr(3, 1).c_str());
+			int _in_rob = atoi(FP_MULT_RS[_in_rs]->QK.substr(3).c_str());
 			if (ROB[_in_rob - 1]->finish == TRUE)
 				return TRUE;
 			else
@@ -823,11 +824,16 @@ int value_available_in_vk_or_qk(struct instr& INS)
 	}
 	else if (ins.find("Add.d") == 0 || ins.find("Sub.d") == 0)
 	{
+		if (CYCLE == 15 && INS.inQ == 12)
+		{
+			std::cout << "*********** debugging here ********** " << INS.in_rs << std::endl;
+		}
+		print_rob();
 		if (FP_ADDER_RS[_in_rs]->VK != EMPTY)
 			return TRUE;
 		else
 		{
-			int _in_rob = atoi(FP_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str());
+			int _in_rob = atoi(FP_ADDER_RS[_in_rs]->QK.substr(3).c_str());
 			if (ROB[_in_rob - 1]->finish == TRUE)
 				return TRUE;
 			else
@@ -840,7 +846,7 @@ int value_available_in_vk_or_qk(struct instr& INS)
 			return TRUE;
 		else
 		{
-			int _in_rob = atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str());
+			int _in_rob = atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str());
 			if (ROB[_in_rob - 1]->finish == TRUE)
 				return TRUE;
 			else
@@ -859,7 +865,7 @@ int value_available_in_vj_or_qj(struct instr& INS)
 			return TRUE;
 		else
 		{
-			int _in_rob = atoi(FP_MULT_RS[_in_rs]->QJ.substr(3, 1).c_str());
+			int _in_rob = atoi(FP_MULT_RS[_in_rs]->QJ.substr(3).c_str());
 			if (ROB[_in_rob - 1]->finish == TRUE)
 				return TRUE;
 			else
@@ -872,7 +878,7 @@ int value_available_in_vj_or_qj(struct instr& INS)
 			return TRUE;
 		else
 		{
-			int _in_rob = atoi(FP_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str());
+			int _in_rob = atoi(FP_ADDER_RS[_in_rs]->QJ.substr(3).c_str());
 			if (ROB[_in_rob - 1]->finish == TRUE)
 				return TRUE;
 			else
@@ -885,7 +891,7 @@ int value_available_in_vj_or_qj(struct instr& INS)
 			return TRUE;
 		else
 		{
-			int _in_rob = atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str());
+			int _in_rob = atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3).c_str());
 			if (ROB[_in_rob - 1]->finish == TRUE)
 				return TRUE;
 			else
@@ -907,7 +913,7 @@ int execute(struct instr& INS)
 
 	if (RESULT[INS.inQ - 1][ISSUE] == 0)
 	{
-		std::cout << "Instruction " << INS.num << " did not issue" << std::endl;
+		std::cout << "Instruction " << INS.inQ << " did not issue" << std::endl;
 		return FALSE;
 	}
 	else
@@ -917,12 +923,12 @@ int execute(struct instr& INS)
 		std::string op = elems[0];
 		std::string operant1 = elems[1];
 		std::string operant2 = elems[2];
-		std::cout << "debugging here ********0 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+		// std::cout << "debugging here ********0 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 		if (op.find("Ld") == 0)
 		{
 			if (LS_FU_USED < CONS_MAP[LOAD_STORE_UNIT][NUM_FUS])
 			{
-				std::cout << "debugging here ********1 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+				// std::cout << "debugging here ********1 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 				std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
 				int _in_rs = INS.in_rs;
 				// print_memory_lock();
@@ -930,7 +936,7 @@ int execute(struct instr& INS)
 				{
 					if (addr_ready(INS) == TRUE)
 					{
-						std::cout << "Instruction " << INS.num << " begin execute" << std::endl;
+						std::cout << "Instruction " << INS.inQ << " begin execute" << std::endl;
 						++LS_FU_USED;
 						RESULT[INS.inQ - 1][EXE] = CYCLE;
 						INS.state = EXE;
@@ -938,7 +944,7 @@ int execute(struct instr& INS)
 					}
 					else
 					{
-						std::cout << "Instruction " << INS.num << " Address not ready" << std::endl;
+						std::cout << "Instruction " << INS.inQ << " Address not ready" << std::endl;
 						return FALSE;
 					}
 				}
@@ -947,14 +953,14 @@ int execute(struct instr& INS)
 					std::cout << "Address " << operant2 << "has been locked" << std::endl;
 				}
 			}
-			std::cout << "there is no rs load_store_fu for it" << std::endl;
+			std::cout << "there is no rs load_store_fu for " << INS.inQ << std::endl;
 			return FALSE;
 		}
 		else if (op.find("Sd") == 0)
 		{
 			if (LS_FU_USED < CONS_MAP[LOAD_STORE_UNIT][NUM_FUS])
 			{
-				std::cout << "debugging here ********2 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+				// std::cout << "debugging here ********2 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 				int _in_rs = INS.in_rs;
 				std::cout << _in_rs << " in_rs" << std::endl;
 				// std::cout << op << "	" << operant1 << "	" << operant2 << std::endl;
@@ -963,7 +969,7 @@ int execute(struct instr& INS)
 				int loc2 = operant2.find(")");
 				std::string reg = operant2.substr(loc1 + 1, loc2 - loc1 - 1);
 				if (addr_ready(INS) == TRUE && (LS_RS[INS.in_rs]->VJ != EMPTY ||
-					ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3, 1).c_str()) - 1]->finish == TRUE) &&
+					ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3).c_str()) - 1]->finish == TRUE) &&
 					TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
 				{
 					// std::cout << "**********everything's ready **********" << std::endl;
@@ -971,7 +977,7 @@ int execute(struct instr& INS)
 					++LS_FU_USED;
 					RESULT[INS.inQ - 1][EXE] = CYCLE;
 					INS.state = EXE;
-					std::cout << "Instruction " << INS.num << " begin execute" << std::endl;
+					std::cout << "Instruction " << INS.inQ << " begin execute" << std::endl;
 					return TRUE;
 				}
 				else
@@ -985,7 +991,7 @@ int execute(struct instr& INS)
 		{
 			if (INTEGER_FU_USED < CONS_MAP[INTEGER_ADDER][NUM_FUS])
 			{
-				std::cout << "debugging here ********3 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+				// std::cout << "debugging here ********3 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 				if (value_available_in_vj_or_qj(INS) == TRUE && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end() &&
 						value_available_in_vk_or_qk(INS) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 				{
@@ -996,7 +1002,7 @@ int execute(struct instr& INS)
 				}
 				else
 				{
-					std::cout << "*******&&&&&&^^^^^^ value not available" << std::endl;
+					// std::cout << "*******&&&&&&^^^^^^ value not available" << std::endl;
 					return FALSE;
 				}
 			}
@@ -1004,7 +1010,7 @@ int execute(struct instr& INS)
 		}
 		else
 		{
-			std::cout << "debugging here ********4 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+			// std::cout << "debugging here ********4 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 			std::string operant3 = elems[3];
 			// for operant1 : not renamed in RAT
 			// for operant2 : value known in ARF and not renamed in RAT
@@ -1014,11 +1020,11 @@ int execute(struct instr& INS)
 
 			if (op.find("Mult.d") == 0)
 			{
-				std::cout << "debugging here ********7 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
-				std::cout << FP_MULT_FU_USED << std::endl;
+				// std::cout << "debugging here ********7 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+				// std::cout << FP_MULT_FU_USED << std::endl;
 				if (FP_MULT_FU_USED < CONS_MAP[FP_MULTIPLIER][NUM_FUS])
 				{
-					std::cout << "debugging here ********7 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+					// std::cout << "debugging here ********7 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 					// if ((FP_MULT_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY).compare(ROB[RAT[operant1] - 1]->rob_name) == 0 &&
 					// 	value_available_in_vj_or_qj(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end() &&
 					// 	value_available_in_vk_or_qk(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant3) == TEM_REG_LOCKER.end())
@@ -1029,6 +1035,7 @@ int execute(struct instr& INS)
 						++FP_MULT_FU_USED;
 						RESULT[INS.inQ - 1][EXE] = CYCLE;
 						INS.state = EXE;
+						std::cout << "Instruction " << INS.inQ << " begin execute" << std::endl;
 						return TRUE;
 					}
 					else
@@ -1040,6 +1047,10 @@ int execute(struct instr& INS)
 			}
 			else if ((op.find("Add.d") == 0 || op.find("Sub.d") == 0))
 			{
+				if (CYCLE == 25 && INS.inQ == 4)
+				{
+					std::cout << "debugging here ************** " << std::endl;
+				}
 				if (FP_ADDER_FU_USED < CONS_MAP[FP_ADDER][NUM_FUS])
 				{
 					// if ((FP_ADDER_RS[INSTRS[num - 1]->in_rs]->ROB_ENTRY).compare(ROB[RAT[operant1] - 1]->rob_name) == 0 &&
@@ -1052,6 +1063,7 @@ int execute(struct instr& INS)
 						++FP_ADDER_FU_USED;
 						RESULT[INS.inQ - 1][EXE] = CYCLE;
 						INS.state = EXE;
+						std::cout << "Instruction " << INS.inQ << " begin execute" << std::endl;
 						return TRUE;
 					}
 					else
@@ -1059,6 +1071,7 @@ int execute(struct instr& INS)
 						return FALSE;
 					}
 				}
+				std::cout << "debugging here " << "no fu for " << INS.inQ << std::endl;
 				return FALSE;
 			}
 			else if (op.find("Addi") == 0)
@@ -1069,15 +1082,16 @@ int execute(struct instr& INS)
 					// 	value_available_in_vj_or_qj(INSTRS, num) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 					if (value_available_in_vj_or_qj(INS) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 					{
-						std::cout << "debugging here ********5 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+						// std::cout << "debugging here ********5 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 						++INTEGER_FU_USED;
 						RESULT[INS.inQ - 1][EXE] = CYCLE;
 						INS.state = EXE;
+						std::cout << "Instruction " << INS.inQ << " begin execute" << std::endl;
 						return TRUE;
 					}
 					else
 					{
-						std::cout << "debugging here ********6 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
+						// std::cout << "debugging here ********6 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
 						return FALSE;
 					}
 				}
@@ -1101,6 +1115,7 @@ int execute(struct instr& INS)
 						++INTEGER_FU_USED;
 						RESULT[INS.inQ - 1][EXE] = CYCLE;
 						INS.state = EXE;
+						std::cout << "Instruction " << INS.inQ << " begin execute" << std::endl;
 						return TRUE;
 					}
 					else
@@ -1117,6 +1132,8 @@ int execute(struct instr& INS)
 
 void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 {
+	if (integer_adder_stall == TRUE)
+		return;
 	if (branch_stall == TRUE)
 	{
 		std::cout << "Branch stall, wait to solve the branch" << std::endl;
@@ -1148,6 +1165,8 @@ void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 	tmp.state = -1;
 	tmp.inQ = INS_QUEUE.size() + 1;
 	INS_QUEUE.push_back(tmp);
+	if (tmp._ins.find("Addi") == 0) 
+		integer_adder_stall = TRUE;
 	// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 	++TO_PUSH_INTO_QUEUE;
 	// std::cout << RESULT[5][0] << "*************^^^^^^^^^^^^^^" << std::endl;
@@ -1160,7 +1179,7 @@ int memory(struct instr& INS)
 	{
 		if (RESULT[INS.inQ - 1][EXE] != 0)
 		{
-			std::cout << "Instruction " << INS.num << " memory begin" << std::endl;
+			std::cout << "Instruction " << INS.inQ << " memory begin" << std::endl;
 			RESULT[INS.inQ - 1][MEMORY] = CYCLE;
 			INS.state = MEMORY;
 			--LS_FU_USED;
@@ -1168,7 +1187,7 @@ int memory(struct instr& INS)
 		}
 		else
 		{
-			std::cout << "Instruction " << INS.num << " not execute yet." << std::endl;
+			std::cout << "Instruction " << INS.inQ << " not execute yet." << std::endl;
 			return FALSE;
 		}
 	}
@@ -1181,20 +1200,20 @@ int memory(struct instr& INS)
 			if (CYCLE - exe_begin == need)
 			{
 				RESULT[INS.inQ - 1][MEMORY] = RESULT[INS.inQ - 1][EXE];
-				std::cout << "Instruction " << INS.num << " skip memory" << std::endl;
+				std::cout << "Instruction " << INS.inQ << " skip memory" << std::endl;
 				INS.state = MEMORY;
 				write_back(INS);
 				return TRUE;
 			}
 			else
 			{
-				std::cout << "Instruction " << INS.num << " not finish executing" << std::endl;
+				std::cout << "Instruction " << INS.inQ << " not finish executing" << std::endl;
 			return FALSE;
 			}
 		}
 		else
 		{
-			std::cout << "Instruction " << INS.num << " not execute yet." << std::endl;
+			std::cout << "Instruction " << INS.inQ << " not execute yet." << std::endl;
 			return FALSE;
 		}
 	}
@@ -1227,20 +1246,20 @@ int write_back(struct instr& INS)
 	            float res = do_instr_cal(INS);
 	            // reset_rat(operant1);
 	            clear_rs_entry(INS.in_rs, LOAD_STORE_UNIT);
-	            std::cout << "Instruction " << num << " write back" << std::endl;
+	            std::cout << "Instruction " << INS.inQ << " write back" << std::endl;
 	            INS.state = WB;
 	            /* update ROB */
 	            return TRUE;
 	        }
 	        else
 	        {
-	            std::cout << "Instruction " << num << " wait to finish memory" << std::endl;
+	            std::cout << "Instruction " << INS.inQ << " wait to finish memory" << std::endl;
 	            return FALSE;
 	        }
 	    }
 	    else
 	    {
-	        std::cout << "Instruction " << num << " not memory" << std::endl;
+	        std::cout << "Instruction " << INS.inQ << " not memory" << std::endl;
 	        return FALSE;
 	    }
 	}
@@ -1256,20 +1275,20 @@ int write_back(struct instr& INS)
 				// float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
 				// clear_rs_entry(num, LOAD_STORE_UNIT);
-				std::cout << "Instruction " << num << " write back" << std::endl;
+				std::cout << "Instruction " << INS.inQ << " write back" << std::endl;
 				INS.state = WB;
 				/* update ROB */
 				return TRUE;
 			}
 			else
 			{
-				std::cout << "Instruction " << num << " wait to finish memory" << std::endl;
+				std::cout << "Instruction " << INS.inQ << " wait to finish memory" << std::endl;
 				return FALSE;
 			}
 		}
 		else
 		{
-			std::cout << "Instruction " << num << " not memory" << std::endl;
+			std::cout << "Instruction " << INS.inQ << " not memory" << std::endl;
 			return FALSE;
 		}
 	}
@@ -1277,7 +1296,7 @@ int write_back(struct instr& INS)
 	{
 		if (RESULT[INS.inQ - 1][MEMORY] == 0)
 		{
-			std::cout << "Instruction " << num << "not memory" << std::endl;
+			std::cout << "Instruction " << INS.inQ << "not memory" << std::endl;
 			return FALSE; 
 		}
 		else
@@ -1285,7 +1304,7 @@ int write_back(struct instr& INS)
 			RESULT[INS.inQ - 1][WB] = CYCLE;
 			--INTEGER_FU_USED;
 			std::cout << "Instruction " << num << " write back" << std::endl;
-			ROB[atoi(INTEGER_ADDER_RS[INS.in_rs]->ROB_ENTRY.substr(3, 1).c_str()) - 1]->finish = TRUE;
+			ROB[atoi(INTEGER_ADDER_RS[INS.in_rs]->ROB_ENTRY.substr(3).c_str()) - 1]->finish = TRUE;
 			INS.state = WB;
 			clear_rs_entry(INS.in_rs, INTEGER_ADDER);
 			return TRUE;
@@ -1366,7 +1385,7 @@ float do_instr_cal(struct instr& INS)
 		}
 		else
 		{
-			float res = ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+			float res = ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			if (MEM.find(address) != MEM.end())
 			{
 				MEM[address] = res;
@@ -1393,13 +1412,13 @@ float do_instr_cal(struct instr& INS)
 				val_j = FP_MULT_RS[_in_rs]->VJ;
 			else
 			{
-				val_j = ROB[atoi(FP_MULT_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+				val_j = ROB[atoi(FP_MULT_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			}
 			if (FP_MULT_RS[_in_rs]->VK != EMPTY)
 				val_k = FP_MULT_RS[_in_rs]->VK;
 			else
 			{
-				val_k = ROB[atoi(FP_MULT_RS[_in_rs]->QK.substr(3, 1).c_str()) - 1]->value;
+				val_k = ROB[atoi(FP_MULT_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 			}
 			float res = val_j * val_k;
 			update_rob_value(_in_rob, res);
@@ -1411,13 +1430,13 @@ float do_instr_cal(struct instr& INS)
 				val_j = FP_ADDER_RS[_in_rs]->VJ;
 			else
 			{
-				val_j = ROB[atoi(FP_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+				val_j = ROB[atoi(FP_ADDER_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			}
 			if (FP_ADDER_RS[_in_rs]->VK != EMPTY)
 				val_k = FP_ADDER_RS[_in_rs]->VK;
 			else
 			{
-				val_k = ROB[atoi(FP_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str()) - 1]->value;
+				val_k = ROB[atoi(FP_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 			}
 			float res = val_j + val_k;
 			update_rob_value(_in_rob, res);
@@ -1429,13 +1448,13 @@ float do_instr_cal(struct instr& INS)
 				val_j = FP_ADDER_RS[_in_rs]->VJ;
 			else
 			{
-				val_j = ROB[atoi(FP_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+				val_j = ROB[atoi(FP_ADDER_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			}
 			if (FP_ADDER_RS[_in_rs]->VK != EMPTY)
 				val_k = FP_ADDER_RS[_in_rs]->VK;
 			else
 			{
-				val_k = ROB[atoi(FP_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str()) - 1]->value;
+				val_k = ROB[atoi(FP_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 			}
 			float res = val_j - val_k;
 			update_rob_value(_in_rob, res);
@@ -1447,13 +1466,13 @@ float do_instr_cal(struct instr& INS)
 				val_j = INTEGER_ADDER_RS[_in_rs]->VJ;
 			else
 			{
-				val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+				val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			}
 			if (INTEGER_ADDER_RS[_in_rs]->VK != EMPTY)
 				val_k = INTEGER_ADDER_RS[_in_rs]->VK;
 			else
 			{
-				val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str()) - 1]->value;
+				val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 			}
 			std::cout << "QJ: " <<  INTEGER_ADDER_RS[_in_rs]->ROB_ENTRY << std::endl;
 			std::cout << "val_j: " << val_j << " val_k: " << val_k << std::endl;
@@ -1468,7 +1487,7 @@ float do_instr_cal(struct instr& INS)
 				val_j = INTEGER_ADDER_RS[_in_rs]->VJ;
 			else
 			{
-				val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+				val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			}
 			val_k = INTEGER_ADDER_RS[_in_rs]->VK;
 			float res = val_j + val_k;
@@ -1481,13 +1500,13 @@ float do_instr_cal(struct instr& INS)
 				val_j = INTEGER_ADDER_RS[_in_rs]->VJ;
 			else
 			{
-				val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+				val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 			}
 			if (INTEGER_ADDER_RS[_in_rs]->VK != EMPTY)
 				val_k = INTEGER_ADDER_RS[_in_rs]->VK;
 			else
 			{
-				val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str()) - 1]->value;
+				val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 			}
 			float res = val_j + val_k;
 			update_rob_value(_in_rob, res);
@@ -1587,10 +1606,10 @@ int run_to_state(struct instr& INS)
 	}
 	else if (state == ISSUE)
 	{
-		std::cout << "Instruction " << num << " asking for execute" << std::endl;
+		std::cout << "Instruction " << INS.inQ << " asking for execute" << std::endl;
 		result = execute(INS);
 		if (result == TRUE)
-			std::cout << "Instruction " << num << " doing execute " << std::endl;
+			// std::cout << "Instruction " << num << " doing execute " << std::endl;
 
 		// std::cout << INSTRS[num - 1]->_ins.compare("Bne") << std::endl;
 		if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
@@ -1645,14 +1664,14 @@ int run_to_state(struct instr& INS)
 	}
 	else if (state == WB)
 	{
-		std::cout << "Instruction " << INS.num << " asking for commit" << std::endl;
+		// std::cout << "Instruction " << INS.num << " asking for commit" << std::endl;
 		result = commit(INS);
 		// if (result == TRUE)
 		// 	std::cout << "Instruction " << INS.num << " finish committing " << std::endl;
 	}
 	else 
 	{
-		std::cout << "Instruction " << INS.num << " has committed" << std::endl;
+		// std::cout << "Instruction " << INS.num << " has committed" << std::endl;
 	}
 	return result;
 }
@@ -1682,7 +1701,7 @@ int commit(struct instr& INS)
 				float res = do_instr_cal(INS);
 				// // reset_rat(operant1);
 
-				ROB[atoi(LS_RS[INS.in_rs]->ROB_ENTRY.substr(3, 1).c_str())- 1]->finish = TRUE;
+				ROB[atoi(LS_RS[INS.in_rs]->ROB_ENTRY.substr(3).c_str())- 1]->finish = TRUE;
 				clear_rs_entry(INS.in_rs, LOAD_STORE_UNIT);
 				commit_is_lock = TRUE;
 				RESULT[INS.inQ - 1][COMMIT] = CYCLE;
@@ -1716,16 +1735,18 @@ int commit(struct instr& INS)
 		{
 			// if (ROB[_in_rob]->finish == TRUE)
 			// {
-				commit_is_lock = TRUE;
-				RESULT[INS.inQ - 1][COMMIT] = CYCLE;
-				// std::pair<int, int> the_pair (num, TRUE);
-				// HAS_COMMIT.insert(the_pair);
-				// HAS_COMMIT[num] = TRUE;
-				INS.has_committed = TRUE;
-				INS.state = COMMIT;
-				++CAN_COMMIT;
-				std::cout << "Instruction " << INS.num << " commit" << std::endl;
-				return TRUE;
+			if ((INS._ins).find("Addi") == 0)
+				integer_adder_stall = FALSE;
+			commit_is_lock = TRUE;
+			RESULT[INS.inQ - 1][COMMIT] = CYCLE;
+			// std::pair<int, int> the_pair (num, TRUE);
+			// HAS_COMMIT.insert(the_pair);
+			// HAS_COMMIT[num] = TRUE;
+			INS.has_committed = TRUE;
+			INS.state = COMMIT;
+			++CAN_COMMIT;
+			std::cout << "Instruction " << INS.num << " commit" << std::endl;
+			return TRUE;
 			// }
 		}
 		return FALSE;
@@ -1777,7 +1798,7 @@ void print_result()
 void print_rob()
 {
 	std::cout << "********** ROB **********" << std::endl;
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 20; ++i)
 	{
 		std::cout << ROB[i]->rob_name << "	" << ROB[i]->dest << "	" << ROB[i]->value << "	" << ROB[i]->finish << std::endl;
 	}
@@ -1874,6 +1895,7 @@ void run_simulator()
 		std::cout << std::endl;
 		tmp_should_fetch = SHOULD_FETCH;
 		std::cout << "************** in cycle " << CYCLE << " ************** " << SHOULD_FETCH << "	" << INS_NUM << std::endl;
+		
 		move_to_pipeline_do_nothing(INS_QUEUE, TO_PUSH_INTO_QUEUE);
 
 		for (loop = 0; loop < INS_QUEUE.size(); ++loop)
@@ -1881,8 +1903,9 @@ void run_simulator()
 			result = run_to_state(INS_QUEUE[loop]);
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 		}
-		// if (CYCLE == 51)
-		if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE)
+		// print_result();
+		// if (CYCLE == 39)
+		if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE && TO_PUSH_INTO_QUEUE > INS_NUM)
 		{
 			// std::cout << "debugging********* " << INS_QUEUE[INS_QUEUE.size() - 1].has_committed << std::endl;
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
@@ -1893,11 +1916,11 @@ void run_simulator()
 			print_rs();
 			print_arf();
 			print_result();
-			print_memory_lock();
-			print_just_commit_addr();
+			// print_memory_lock();
+			// print_just_commit_addr();
 			
-			print_static_value();
-			print_tem_reg_locker();
+			// print_static_value();
+			// print_tem_reg_locker();
 			
 			// print_instr(INS_QUEUE[1]);
 			break;
@@ -1923,11 +1946,11 @@ int cal_branch_addr(struct instr& INS)
 	if (INTEGER_ADDER_RS[_in_rs]->VJ != EMPTY)
 		val_j = INTEGER_ADDER_RS[_in_rs]->VJ;
 	else
-		val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3, 1).c_str()) - 1]->value;
+		val_j = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QJ.substr(3).c_str()) - 1]->value;
 	if (INTEGER_ADDER_RS[_in_rs]->VK != EMPTY)
 		val_k = INTEGER_ADDER_RS[_in_rs]->VK;
 	else
-		val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3, 1).c_str()) - 1]->value;
+		val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 	if (ins.find("Beq") == 0)
 	{
 		if (val_j == val_k)

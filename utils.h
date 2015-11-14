@@ -246,6 +246,11 @@ static int TO_PUSH_INTO_QUEUE = 1;
  */
 static int branch_stall = FALSE;
 
+/**
+ *  stall for integer adder
+ */
+static int integer_adder_stall = FALSE;
+
 
 /****************************************************************************************
  *     								              Structure Definition                                *
