@@ -29,6 +29,8 @@
 #define FALSE				      0
 #define EMPTY				      1000000.0
 
+#define TAKEN             1
+#define NOT_TAKEN         0
 
 // Ld F2, 45(R3)
 // Add.i F3, F2, R2
@@ -58,11 +60,13 @@ int ROB_SIZE;
  *  ROB recent entry number
  */
 static int ROB_NOW_NUM = 1;
+static int tmp_ROB_NOW_NUM;
 
 /**
  *  a pointer to ROB array
  */
 struct rob_entry **ROB;
+struct rob_entry **tmp_ROB;
 
 /**
  *  an unorder_map for registers and their value
@@ -88,6 +92,7 @@ static int CYCLE = 1;
  *  reslut table
  */
 static int RESULT[100][5];
+static int tmp_RESULT[100][5];
 /*
 	RESULT = new int*[number of instructions];
 	for (int i = 0; i < num of ins; ++i)
@@ -100,6 +105,7 @@ static int RESULT[100][5];
  *  RAT unordered_map
  */
 static std::unordered_map<std::string, int> RAT;
+static std::unordered_map<std::string, int> tmp_RAT;
 
 /**
  * Architecture Reg File
@@ -110,41 +116,49 @@ static std::unordered_map<std::string, float> ARF;
  *  Integer adder RS
  */
 static struct RS **INTEGER_ADDER_RS;
+static struct RS **tmp_INTEGER_ADDER_RS;
 
 /**
  *  entries used in Integer adder RS
  */
 static int INTEGER_ADDER_RS_USED = 0;
+static int tmp_INTEGER_ADDER_RS_USED;
 
 /**
  *  FP adder RS
  */
 static struct RS **FP_ADDER_RS;
+static struct RS **tmp_FP_ADDER_RS;
 
 /**
  *  entries used in FP adder RS
  */
 static int FP_ADDER_RS_USED = 0;
+static int tmp_FP_ADDER_RS_USED;
 
 /**
  *  FP multiplier RS
  */
 static struct RS **FP_MULT_RS;
+static struct RS **tmp_FP_MULT_RS;
 
 /**
  *  entries used in FP multiplier RS
  */
 static int FP_MULT_RS_USED = 0;
+static int tmp_FP_MULT_RS_USED;
 
 /**
  *  Load/store unit RS
  */
 static struct RS **LS_RS;
+static struct RS **tmp_LS_RS;
 
 /**
  *  entries used in LS_RS
  */
 static int LS_RS_USED = 0;
+static int tmp_LS_RS_USED;
 
 /**
  *  whether a instruction has been fetched
@@ -155,6 +169,7 @@ static std::unordered_map<int, int> HAS_FETCH;
  *  whether a instruction has been committed
  */
 static std::unordered_map<int, int> HAS_COMMIT;
+static std::unordered_map<int, int> tmp_HAS_COMMIT;
 
 // *
 //  *  pointer to all instr stucture
@@ -170,11 +185,13 @@ static std::vector<struct instr> INSTRS;
  *  next number of instruction needed to fetch
  */
 static int SHOULD_FETCH = 1;
+static int tmp_SHOULD_FETCH = 1;
 
 /**
  *  the instruction number that can commit
  */
 static int CAN_COMMIT = 1;
+static int tmp_CAN_COMMIT;
 
 /**
  *  commit lock
@@ -205,26 +222,31 @@ std::unordered_map<std::string, int> MEMORY_LOCK;
  *  used FU of Integer adder
  */
 static int INTEGER_FU_USED = 0;
+static int tmp_INTEGER_FU_USED;
 
 /**
  *  used FU of FP adder
  */
 static int FP_ADDER_FU_USED = 0;
+static int tmp_FP_ADDER_FU_USED;
 
 /**
  *  used FU of FP multiplier
  */
 static int FP_MULT_FU_USED = 0;
+static int tmp_FP_MULT_FU_USED;
 
 /**
  *  used FU of Load/Store unit
  */
 static int LS_FU_USED = 0;
+static int tmp_LS_FU_USED;
 
 /**
  *  row number that the result should be inserted now
  */
 static int RESULT_NOW_ROW = 0;
+static int tmp_RESULT_NOW_ROW;
 
 /**
  *  row anchor for each instruction, which is a map
@@ -235,11 +257,13 @@ static std::unordered_map<int, std::vector<int> > INSTRS_ANCHOR;
  *  instruction queue
  */
 static std::vector<struct instr> INS_QUEUE;
+static std::vector<struct instr> tmp_INS_QUEUE;
 
 /**
  *  instruction number that should push into queue
  */
 static int TO_PUSH_INTO_QUEUE = 1;
+static int tmp_TO_PUSH_INTO_QUEUE;
 
 /**
  *  branch stall flag
@@ -251,6 +275,16 @@ static int branch_stall = FALSE;
  */
 static int integer_adder_stall = FALSE;
 
+/**
+ *  Branch target buffer
+ */
+static int BTB[8][3];
+
+/**
+ *  branch CYCLE
+ */
+static int branch_cycle_begin;
+static int branch_cycle_end;
 
 /****************************************************************************************
  *     								              Structure Definition                                *
@@ -600,6 +634,108 @@ release_after_store_commit(struct instr INS);
  */
 void
 print_tem_reg_locker();
+
+/**
+ *  reset all states previous to the branch prediction
+ */
+void
+reset_all_to_previous_state();
+
+/**
+ *  store all states before branch
+ */
+void
+store_all_before_branch();
+
+/**
+ *  store rob state before branch
+ */
+void 
+store_rob_state();
+
+/**
+ *  reset rob state
+ */
+void
+reset_rob_state();
+
+/**
+ *  store result state
+ */
+void 
+store_result_state();
+
+/**
+ *  reset result state
+ */
+void
+reset_result_state();
+
+/**
+ *  store rat state
+ */
+void 
+store_rat_state();
+
+/**
+ *  reset rat state
+ */
+void
+reset_rat_state();
+
+/**
+ *  store rs state
+ */
+void
+store_rs_state();
+
+/**
+ *  reset rs state
+ */
+void
+reset_rs_state();
+
+/**
+ *  store the has commit state
+ */
+void 
+store_has_commit_state();
+
+/**
+ *  reset has commit state
+ */
+void
+reset_has_commit_state();
+
+/**
+ *  void store_ins_queue_state()
+ */
+void 
+store_ins_queue_state();
+
+/**
+ *  reset ins queue
+ */
+void
+reset_ins_queue_state();
+
+/**
+ *  print instruction in queue
+ */
+void
+print_ins_in_queue();
+
+/**
+ *  print temp instruction in queue
+ */
+void
+print_tmp_ins_in_queue();
+
+/**
+ *  after reset, fill all result blank
+ */
+void
+reprocess_from_reset();
 
 // Sd F6, 0(R2)
 // Add R1, R1, R2
