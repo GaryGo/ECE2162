@@ -255,7 +255,7 @@ void store_rob_state()
 
 void reset_rob_state()
 {
-	int j = ROB_SIZE;	
+	int j = ROB_SIZE;
 	for (int i = 0; i < j; ++i)
 	{
 		ROB[i]->rob_name = tmp_ROB[i]->rob_name;
@@ -821,7 +821,7 @@ int issue(struct instr& INS)
 	std::cout << "Instruction " << INS.num << " state is: " << INS.state << std::endl;
 	if (INS.state == -1)
 	{
-		
+
 		int tmp = check_rs_available(INS);
 		if (tmp == TRUE) /* entry available for this instruction */
 		{
@@ -1039,6 +1039,7 @@ int execute(struct instr& INS)
 				if (value_available_in_vj_or_qj(INS) == TRUE && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end() &&
 						value_available_in_vk_or_qk(INS) == TRUE && TEM_REG_LOCKER.find(operant2) == TEM_REG_LOCKER.end())
 				{
+					std::cout << op << " Instrcution " << INS.inQ << "begin execute" << std::endl;
 					++INTEGER_FU_USED;
 					RESULT[INS.inQ - 1][EXE] = CYCLE;
 					INS.state = EXE;
@@ -1209,7 +1210,7 @@ void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 	tmp.state = -1;
 	tmp.inQ = INS_QUEUE.size() + 1;
 	INS_QUEUE.push_back(tmp);
-	if (tmp._ins.find("Addi") == 0) 
+	if (tmp._ins.find("Addi") == 0)
 		integer_adder_stall = TRUE;
 	// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 	if (INSTRS[num - 1]._ins.find("Beq") == 0 || INSTRS[num - 1]._ins.find("Bne") == 0)
@@ -1242,14 +1243,14 @@ void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 				std::cout << "branch predict taken" << std::endl;
 				std::cout << "predict taken and to_push_into_queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 			}
-				
+
 		}
 	}
 	else
 	{
 		// std::cout << "&*&*&*&*&*&*&*& NOT BRANCH " << TO_PUSH_INTO_QUEUE << "	" << tmp_TO_PUSH_INTO_QUEUE << std::endl;
 		++TO_PUSH_INTO_QUEUE;
-		std::cout << "Instruct " << TO_PUSH_INTO_QUEUE << " will move into queue" << std::endl;			
+		std::cout << "Instruct " << TO_PUSH_INTO_QUEUE << " will move into queue" << std::endl;
 	}
 	// std::cout << RESULT[5][0] << "*************^^^^^^^^^^^^^^" << std::endl;
 }
@@ -1379,7 +1380,7 @@ int write_back(struct instr& INS)
 		if (RESULT[INS.inQ - 1][MEMORY] == 0)
 		{
 			std::cout << "Instruction " << INS.inQ << "not memory" << std::endl;
-			return FALSE; 
+			return FALSE;
 		}
 		else
 		{
@@ -1693,7 +1694,7 @@ int run_to_state(struct instr& INS)
 		std::cout << "Instruction " << INS.inQ << " asking for execute" << std::endl;
 		result = execute(INS);
 		if (result == TRUE)
-			std::cout << "Instruction " << num << " doing execute " << std::endl;
+			std::cout << "Instruction " << INS.inQ << " doing execute " << std::endl;
 
 		// std::cout << INSTRS[num - 1]->_ins.compare("Bne") << std::endl;
 		if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
@@ -1722,6 +1723,7 @@ int run_to_state(struct instr& INS)
 		/* for branch */
 		if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
 		{
+			std::cout << "&*&*&*&*&*&*&*&*& here " << INS.inQ << std::endl;
 			if (branch_resolved(INS.inQ) == TRUE)
 			{
 				int no_use = cal_branch_addr(INS);
@@ -1754,7 +1756,7 @@ int run_to_state(struct instr& INS)
 		// if (result == TRUE)
 		// 	std::cout << "Instruction " << INS.num << " finish committing " << std::endl;
 	}
-	else 
+	else
 	{
 		// std::cout << "Instruction " << INS.num << " has committed" << std::endl;
 	}
@@ -1814,7 +1816,7 @@ int commit(struct instr& INS)
 				INS.state = COMMIT;
 				INS.has_committed = TRUE;
 				return TRUE;
-			}	
+			}
 		}
 		if (RESULT[INS.inQ - 1][WB] != 0 && INS.inQ == CAN_COMMIT && commit_is_lock == FALSE)
 		{
@@ -1906,7 +1908,7 @@ void refresh_value()
 {
 	for (int i = 0 ; i < ROB_SIZE; ++i)
 	{
-		if (ROB[i]->finish == TRUE && ROB[i]->dest != "" && 
+		if (ROB[i]->finish == TRUE && ROB[i]->dest != "" &&
 			ROB[i]->finish == TRUE && ROB[i]->dest != "Bne" &&
 			ROB[i]->finish == TRUE && ROB[i]->dest != "Beq")
 		{
@@ -1967,7 +1969,7 @@ void print_just_commit_addr()
 void print_tem_reg_locker()
 {
 	std::cout << "************ TEM REG ***********" << std::endl;
-	for (std::unordered_map<std::string, int>::iterator it = TEM_REG_LOCKER.begin(); 
+	for (std::unordered_map<std::string, int>::iterator it = TEM_REG_LOCKER.begin();
 			it != TEM_REG_LOCKER.end(); ++it)
 	{
 		std::cout << it->first << "	" << it->second << std::endl;
@@ -2003,20 +2005,20 @@ void run_simulator()
 		tmp_should_fetch = SHOULD_FETCH;
 		// std::cout << "************** in cycle " << CYCLE << " ************** " << SHOULD_FETCH << "	" << INS_NUM << std::endl;
 		std::cout << "************** in cycle " << CYCLE << " ************** " << TO_PUSH_INTO_QUEUE << std::endl;
-		
+
 
 
 		std::cout << std::endl;
 		move_to_pipeline_do_nothing(INS_QUEUE, TO_PUSH_INTO_QUEUE);
-		// std::cout << "&*&*&*&*tmp_TO_PUSH_INTO_QUEUE is: " << tmp_TO_PUSH_INTO_QUEUE << std::endl; 
+		// std::cout << "&*&*&*&*tmp_TO_PUSH_INTO_QUEUE is: " << tmp_TO_PUSH_INTO_QUEUE << std::endl;
 		// std::cout << "debugging********* " << TO_PUSH_INTO_QUEUE << std::endl;
 
 		for (loop = 0; loop < INS_QUEUE.size(); ++loop)
 		{
-			
+
 			result = run_to_state(INS_QUEUE[loop]);
-			std::cout << "&*&*&*&*TO_PUSH_INTO_QUEUE is: " << TO_PUSH_INTO_QUEUE << std::endl; 
-			// std::cout << "&*&*&*&*tmp_TO_PUSH_INTO_QUEUE is: " << tmp_TO_PUSH_INTO_QUEUE << std::endl; 
+			std::cout << "&*&*&*&*TO_PUSH_INTO_QUEUE is: " << TO_PUSH_INTO_QUEUE << std::endl;
+			// std::cout << "&*&*&*&*tmp_TO_PUSH_INTO_QUEUE is: " << tmp_TO_PUSH_INTO_QUEUE << std::endl;
 			// print_ins_in_queue();
 			// std::cout << std::endl;
 			// print_tmp_ins_in_queue();
@@ -2035,8 +2037,8 @@ void run_simulator()
 		// 	std::cout << "the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 		// 	break;
 		// }
-		// if(CYCLE == 19)
-		if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE && TO_PUSH_INTO_QUEUE > INS_NUM)
+		if(CYCLE == 44)
+		// if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE && TO_PUSH_INTO_QUEUE > INS_NUM)
 		{
 			print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 			// print_instr(tmp_INS_QUEUE[tmp_INS_QUEUE.size() - 1]);
@@ -2051,19 +2053,21 @@ void run_simulator()
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 2]);
 			// print_instr(tmp_INS_QUEUE[tmp_INS_QUEUE.size() - 2]);
 			refresh_value();
-			print_rat();
-			print_rob();
-			print_tmp_rob();
+			//print_rat();
+			//print_rob();
+			//print_tmp_rob();
 			// print_memory();
 			print_rs();
 			// print_arf();
+            print_arf();
+            print_memory();
 			print_result();
 			// print_memory_lock();
 			// print_just_commit_addr();
-			// 
+			//
 			// print_static_value();
 			// print_tem_reg_locker();
-			
+
 			// print_instr(INS_QUEUE[1]);
 			break;
 		}
@@ -2132,13 +2136,16 @@ int cal_branch_addr(struct instr& INS)
 		val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 	if (ins.find("Beq") == 0)
 	{
+		print_rs();
+		print_rat();
+		print_rob();
 		if (BTB[INS.num - 1][2] == TAKEN)
 		{
 			if (val_j == val_k)
 			{
 				res = INS.num + (4 + offset * 4) / 4;
 				std::cout << "*** Beq predict TAKEN correct, continue" << std::endl;
-			}	
+			}
 			else
 			{
 				reset_all_to_previous_state();
@@ -2153,9 +2160,10 @@ int cal_branch_addr(struct instr& INS)
 				std::cout << "*** Beq predict TAKEN error, reset" << std::endl;
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 				reprocess_from_reset();
+				std::cout << "&*&*&*&*&*&*&*& " << CYCLE << std::endl;
 			}
 		}
-		else 
+		else
 		{
 			if (val_j == val_k)
 			{
@@ -2164,23 +2172,23 @@ int cal_branch_addr(struct instr& INS)
 				std::cout << "here*****************&^&^&^&^&^&^&^&^ 222" << std::endl;
 				branch_cycle_end = CYCLE;
 				BTB[INS.num - 1][2] = TAKEN;
-				
+
 				// ++INTEGER_FU_USED;
 				// RESULT[INS.inQ - 1][EXE] = CYCLE;
 				// INS.state = EXE;
 				TO_PUSH_INTO_QUEUE = tmp_TO_PUSH_INTO_QUEUE;
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
-				res = INS.num + (4 + offset * 4) / 4;	
+				res = INS.num + (4 + offset * 4) / 4;
 				reprocess_from_reset();
 			}
 			else
 			{
-				std::cout << "*** Beq predict NOT TAKEN correct, reset" << std::endl;
+				std::cout << "*** Beq predict NOT TAKEN correct, continue" << std::endl;
 				res = -1;
 			}
 		}
 	}
-	else 
+	else
 	{
 		if (BTB[INS.num - 1][2] == TAKEN)
 		{
@@ -2203,7 +2211,7 @@ int cal_branch_addr(struct instr& INS)
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 				res = tmp_TO_PUSH_INTO_QUEUE;
 				reprocess_from_reset();
-			}		
+			}
 		}
 		else
 		{
@@ -2536,8 +2544,11 @@ void print_static_value()
 int main(int argc, char** argv)
 {
 	read_file("test.txt");
-	print_cons_map();
-	run_simulator();
+    //refresh_value();
+	//print_cons_map();
+    //print_arf();
+    //print_memory();
+    run_simulator();
 	return 0;
 }
 
