@@ -154,11 +154,11 @@ void init_all()
 	/* Init ROB */
 	j = ROB_SIZE;
 	ROB = new struct rob_entry *[j];
-	tmp_ROB = new struct rob_entry *[j];
+	// tmp_ROB = new struct rob_entry *[j];
 	for (i = 0; i < j; ++i)
 	{
         ROB[i] = new struct rob_entry;
-        tmp_ROB[i] = new struct rob_entry;
+        // tmp_ROB[i] = new struct rob_entry;
         ROB[i]->rob_name = "ROB" + std::to_string(i + 1);
         ROB[i]->finish = FALSE;
 	}
@@ -172,14 +172,48 @@ void init_all()
 		}
 	}
 
+	/* tmp state */
+	for (i = 0; i < 100; ++i)
+	{
+		_tmp_states[i].tmp_ROB = new struct rob_entry *[ROB_SIZE];
+		for (j = 0; j < ROB_SIZE; ++j)
+		{
+			_tmp_states[i].tmp_ROB[j] = new struct rob_entry;
+		}
+
+		_tmp_states[i].tmp_INTEGER_ADDER_RS = new struct RS *[CONS_MAP[INTEGER_ADDER][NUM_RS]];
+		for (j = 0; j < CONS_MAP[INTEGER_ADDER][NUM_RS]; ++j)
+		{
+			_tmp_states[i].tmp_INTEGER_ADDER_RS[j] = new struct RS;
+		}
+
+		_tmp_states[i].tmp_FP_ADDER_RS = new struct RS *[CONS_MAP[FP_ADDER][NUM_RS]];
+		for (j = 0; j < CONS_MAP[FP_ADDER][NUM_RS]; ++j)
+		{
+			_tmp_states[i].tmp_FP_ADDER_RS[j] = new struct RS;
+		}
+
+		_tmp_states[i].tmp_FP_MULT_RS = new struct RS *[CONS_MAP[FP_MULTIPLIER][NUM_RS]];
+		for (j = 0; j < CONS_MAP[FP_MULTIPLIER][NUM_RS]; ++j)
+		{
+			_tmp_states[i].tmp_FP_MULT_RS[j] = new struct RS;
+		}
+
+		_tmp_states[i].tmp_LS_RS = new struct RS *[CONS_MAP[LOAD_STORE_UNIT][NUM_RS]];
+		for (j = 0; j < CONS_MAP[LOAD_STORE_UNIT][NUM_RS]; ++j)
+		{
+			_tmp_states[i].tmp_LS_RS[j] = new struct RS;
+		}
+	}
+
 	/* Integer adder RS */
 	j = CONS_MAP[INTEGER_ADDER][NUM_RS];
 	INTEGER_ADDER_RS = new struct RS *[j];
-	tmp_INTEGER_ADDER_RS = new struct RS *[j];
+	// tmp_INTEGER_ADDER_RS = new struct RS *[j];
 	for (i = 0; i < j; ++i)
 	{
 		INTEGER_ADDER_RS[i] = new struct RS;
-		tmp_INTEGER_ADDER_RS[i] = new struct RS;
+		// tmp_INTEGER_ADDER_RS[i] = new struct RS;
 		INTEGER_ADDER_RS[i]->BUSY = FALSE;
 		INTEGER_ADDER_RS[i]->VJ = EMPTY;
 		INTEGER_ADDER_RS[i]->VK = EMPTY;
@@ -189,11 +223,11 @@ void init_all()
 	/* FP adder RS */
 	j = CONS_MAP[FP_ADDER][NUM_RS];
 	FP_ADDER_RS = new struct RS *[j];
-	tmp_FP_ADDER_RS = new struct RS *[j];
+	// tmp_FP_ADDER_RS = new struct RS *[j];
 	for (i = 0; i < j; ++i)
 	{
 		FP_ADDER_RS[i] = new struct RS;
-		tmp_FP_ADDER_RS[i] = new struct RS;
+		// tmp_FP_ADDER_RS[i] = new struct RS;
 		FP_ADDER_RS[i]->BUSY = FALSE;
 		FP_ADDER_RS[i]->VJ = EMPTY;
 		FP_ADDER_RS[i]->VK = EMPTY;
@@ -203,11 +237,11 @@ void init_all()
 	/* FP multiplier RS */
 	j = CONS_MAP[FP_MULTIPLIER][NUM_RS];
 	FP_MULT_RS = new struct RS *[j];
-	tmp_FP_MULT_RS = new struct RS * [j];
+	// tmp_FP_MULT_RS = new struct RS * [j];
 	for (i = 0; i < j; ++i)
 	{
 		FP_MULT_RS[i] = new struct RS;
-		tmp_FP_MULT_RS[i] = new struct RS;
+		// tmp_FP_MULT_RS[i] = new struct RS;
 		FP_MULT_RS[i]->BUSY = FALSE;
 		FP_MULT_RS[i]->VJ = EMPTY;
 		FP_MULT_RS[i]->VK = EMPTY;
@@ -217,11 +251,11 @@ void init_all()
 	/* Load/store unit RS */
 	j = CONS_MAP[LOAD_STORE_UNIT][NUM_RS];
 	LS_RS = new struct RS *[j];
-	tmp_LS_RS = new struct RS *[j];
+	// tmp_LS_RS = new struct RS *[j];
 	for (i = 0; i < j; ++i)
 	{
 		LS_RS[i] = new struct RS;
-		tmp_LS_RS[i] = new struct RS;
+		// tmp_LS_RS[i] = new struct RS;
 		LS_RS[i]->BUSY = FALSE;
 		LS_RS[i]->VJ = EMPTY;
 		LS_RS[i]->VK = EMPTY;
@@ -240,29 +274,31 @@ void init_all()
 	}
 }
 
-void store_rob_state()
+void store_rob_state(int inQ)
 {
 	int j = ROB_SIZE;
+	_tmp_states[inQ].tmp_ROB = new struct rob_entry *[j];
 	for (int i = 0; i < j; ++i)
 	{
-        tmp_ROB[i]->rob_name = ROB[i]->rob_name;
-        tmp_ROB[i]->type = ROB[i]->type;
-        tmp_ROB[i]->dest = ROB[i]->dest;
-        tmp_ROB[i]->value = ROB[i]->value;
-        tmp_ROB[i]->finish = ROB[i]->finish;
+		_tmp_states[inQ].tmp_ROB[i] = new struct rob_entry;
+        _tmp_states[inQ].tmp_ROB[i]->rob_name = ROB[i]->rob_name;
+        _tmp_states[inQ].tmp_ROB[i]->type = ROB[i]->type;
+        _tmp_states[inQ].tmp_ROB[i]->dest = ROB[i]->dest;
+        _tmp_states[inQ].tmp_ROB[i]->value = ROB[i]->value;
+        _tmp_states[inQ].tmp_ROB[i]->finish = ROB[i]->finish;
 	}
 }
 
-void reset_rob_state()
+void reset_rob_state(int inQ)
 {
 	int j = ROB_SIZE;
 	for (int i = 0; i < j; ++i)
 	{
-		ROB[i]->rob_name = tmp_ROB[i]->rob_name;
-		ROB[i]->type = tmp_ROB[i]->type;
-		ROB[i]->dest = tmp_ROB[i]->dest;
-		ROB[i]->value = tmp_ROB[i]->value;
-		ROB[i]->finish = tmp_ROB[i]->finish;
+		ROB[i]->rob_name = _tmp_states[inQ].tmp_ROB[i]->rob_name;
+		ROB[i]->type = _tmp_states[inQ].tmp_ROB[i]->type;
+		ROB[i]->dest = _tmp_states[inQ].tmp_ROB[i]->dest;
+		ROB[i]->value = _tmp_states[inQ].tmp_ROB[i]->value;
+		ROB[i]->finish = _tmp_states[inQ].tmp_ROB[i]->finish;
 	}
 }
 
@@ -391,8 +427,8 @@ int fetch_ins(struct instr& INS)
 				++INTEGER_ADDER_RS_USED;
 				// branch_stall = TRUE;
 				INS.state = ISSUE;
-				store_all_before_branch();
-				branch_cycle_begin = CYCLE + 1;
+				store_all_before_branch(INS.inQ);
+				// branch_cycle_begin = CYCLE + 1;
 				break;
 			}
 		}
@@ -1012,6 +1048,9 @@ int execute(struct instr& INS)
 				int loc1 = operant2.find("(");
 				int loc2 = operant2.find(")");
 				std::string reg = operant2.substr(loc1 + 1, loc2 - loc1 - 1);
+
+
+
 				if (addr_ready(INS) == TRUE && (LS_RS[INS.in_rs]->VJ != EMPTY ||
 					ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3).c_str()) - 1]->finish == TRUE) &&
 					TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
@@ -1033,6 +1072,14 @@ int execute(struct instr& INS)
 		}
 		else if ((op.find("Bne") == 0 || op.find("Beq") == 0))
 		{
+
+			std::cout << "**** IN FAKE CYCLE FOR DEBUGGING" << std::endl;
+
+			for (auto it = TEM_REG_LOCKER.begin(); it != TEM_REG_LOCKER.end(); ++it)
+			{
+				std::cout << it->first << "	" << it->second << std::endl;
+			}
+			std::cout << std::endl;
 			if (INTEGER_FU_USED < CONS_MAP[INTEGER_ADDER][NUM_FUS])
 			{
 				// std::cout << "debugging here ********3 " << op << "	" << operant1 << "	"  << operant2 << std::endl;
@@ -1223,6 +1270,7 @@ void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 			BTB[num - 1][0] = num;
 			BTB[num - 1][1] = offset;
 			BTB[num - 1][2] = TAKEN;
+			_tmp_states[tmp.inQ]._should_or_not_taken = TAKEN;
 			tmp_TO_PUSH_INTO_QUEUE = TO_PUSH_INTO_QUEUE + 1;
 			TO_PUSH_INTO_QUEUE = num + (4 + offset * 4) / 4;
 			std::cout << "No branch entry, create an entry and set TAKEN. Instruction " << TO_PUSH_INTO_QUEUE << " will issue next" << std::endl;
@@ -1233,10 +1281,12 @@ void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 			{
 				std::cout << "branch predict not taken" << std::endl;
 				++TO_PUSH_INTO_QUEUE;
+				_tmp_states[tmp.inQ]._should_or_not_taken = NOT_TAKEN;
 				std::cout << "predict not taken and to_push_into_queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 			}
 			else
 			{
+				_tmp_states[tmp.inQ]._should_or_not_taken = TAKEN;
 				tmp_TO_PUSH_INTO_QUEUE = TO_PUSH_INTO_QUEUE + 1;
 				std::cout << "*&&&&*&*&*&*&** " << tmp_TO_PUSH_INTO_QUEUE << std::endl;
 				TO_PUSH_INTO_QUEUE = num + (4 + offset * 4) / 4;
@@ -1697,43 +1747,50 @@ int run_to_state(struct instr& INS)
 			std::cout << "Instruction " << INS.inQ << " doing execute " << std::endl;
 
 		// std::cout << INSTRS[num - 1]->_ins.compare("Bne") << std::endl;
-		if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
+		if (reprocess_lock == FALSE)
 		{
-			// std::cout << "here for debug" << std::endl;
-			if (branch_resolved(INS.inQ) == TRUE)
+			if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
 			{
-				int no_use = cal_branch_addr(INS);
-				if (no_use != -1)
+				// std::cout << "wtf here for debug" << std::endl;
+				if (branch_resolved(INS.inQ) == TRUE)
 				{
-					// std::cout << "dump to the instruction " << cal_branch_addr(INS) << std::endl;
-					std::cout << "jump to the instruction " << no_use << std::endl;
-					// branch_stall = FALSE;
-				}
-				else
-				{
-					std::cout << "skip the branch" << std::endl;
-					// branch_stall = FALSE;
+					int no_use = cal_branch_addr(INS);
+					if (no_use != -1)
+					{
+						// std::cout << "dump to the instruction " << cal_branch_addr(INS) << std::endl;
+						std::cout << "jump to the instruction " << no_use << std::endl;
+						// branch_stall = FALSE;
+					}
+					else
+					{
+						std::cout << "skip the branch" << std::endl;
+						// branch_stall = FALSE;
+					}
 				}
 			}
 		}
+		
 
 	}
 	else if (state == EXE)
 	{
 		/* for branch */
-		if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
+		if (reprocess_lock == FALSE)
 		{
-			std::cout << "&*&*&*&*&*&*&*&*& here " << INS.inQ << std::endl;
-			if (branch_resolved(INS.inQ) == TRUE)
+			if (INS._ins.find("Bne") == 0 || INS._ins.find("Beq") == 0)
 			{
-				int no_use = cal_branch_addr(INS);
-				if (no_use != -1)
+				std::cout << "&*&*&*&*&*&*&*&*& here " << INS.inQ << std::endl;
+				if (branch_resolved(INS.inQ) == TRUE)
 				{
-					std::cout << "jump to the instruction " << no_use << std::endl;
-				}
-				else
-				{
-					std::cout << "skip the branch" << std::endl;
+					int no_use = cal_branch_addr(INS);
+					if (no_use != -1)
+					{
+						std::cout << "jump to the instruction " << no_use << std::endl;
+					}
+					else
+					{
+						std::cout << "skip the branch" << std::endl;
+					}
 				}
 			}
 		}
@@ -1751,8 +1808,10 @@ int run_to_state(struct instr& INS)
 	}
 	else if (state == WB)
 	{
-		// std::cout << "Instruction " << INS.num << " asking for commit" << std::endl;
-		result = commit(INS);
+		std::cout << "Instruction " << INS.inQ << " asking for commit" << std::endl;
+		std::cout << "Instruction " << INS.inQ << " state: " << INS.state << " has commit: " << INS.has_committed << std::endl; 
+ 		std::cout << CAN_COMMIT << "	" << commit_is_lock << std::endl;
+ 		result = commit(INS);
 		// if (result == TRUE)
 		// 	std::cout << "Instruction " << INS.num << " finish committing " << std::endl;
 	}
@@ -1893,12 +1952,12 @@ void print_rob()
 	std::cout << std::endl;
 }
 
-void print_tmp_rob()
+void print_tmp_rob(int inQ)
 {
 	std::cout << "********** tmp ROB **********" << std::endl;
 	for (int i = 0; i < 20; ++i)
 	{
-		std::cout << tmp_ROB[i]->rob_name << "	" << tmp_ROB[i]->dest << "	" << tmp_ROB[i]->value << "	" << tmp_ROB[i]->finish << std::endl;
+		std::cout << _tmp_states[inQ].tmp_ROB[i]->rob_name << "	" << _tmp_states[inQ].tmp_ROB[i]->dest << "	" << _tmp_states[inQ].tmp_ROB[i]->value << "	" << _tmp_states[inQ].tmp_ROB[i]->finish << std::endl;
 	}
 	std::cout << "*****************************" << std::endl;
 	std::cout << std::endl;
@@ -1978,15 +2037,15 @@ void print_tem_reg_locker()
 	std::cout << std::endl;
 }
 
-void print_tmp_ins_in_queue()
+void print_tmp_ins_in_queue(int inQ)
 {
 	std::cout << "******************* tmp Instructions in queue *******************" << std::endl;
-	for (int i = 0 ; i < tmp_INS_QUEUE.size(); ++i)
+	for (int i = 0 ; i < _tmp_states[inQ].tmp_INS_QUEUE.size(); ++i)
 	{
-		std::cout << tmp_INS_QUEUE[i].num << "	";
+		std::cout << _tmp_states[inQ].tmp_INS_QUEUE[i].num << "	" << _tmp_states[inQ].tmp_INS_QUEUE[i]._ins << std::endl;
 	}
-	std::cout << std::endl;
 	std::cout << "*****************************************************************" << std::endl;
+	std::cout << std::endl;
 }
 
 void run_simulator()
@@ -2057,11 +2116,14 @@ void run_simulator()
 			//print_rob();
 			//print_tmp_rob();
 			// print_memory();
-			print_rs();
+			// print_rs();
 			// print_arf();
-            print_arf();
-            print_memory();
+            // print_arf();
+            // print_memory();
 			print_result();
+			print_tmp_ins_in_queue(6);
+			std::cout << BTB[2][2] << std::endl;
+			std::cout << _tmp_states[6]._should_or_not_taken << std::endl;
 			// print_memory_lock();
 			// print_just_commit_addr();
 			//
@@ -2077,7 +2139,7 @@ void run_simulator()
 	std::cout << std::endl;
 }
 
-void reprocess_from_reset()
+void reprocess_from_reset(int inQ)
 {
 	std::cout << std::endl;
 	std::cout << std::endl;
@@ -2086,21 +2148,27 @@ void reprocess_from_reset()
 	std::cout << std::endl;
 	std::cout << "REPROCESSING *************** " << CYCLE << std::endl;
 	print_ins_in_queue();
-	std::cout << branch_cycle_begin << "	" << branch_cycle_end << std::endl;
+	std::cout << _tmp_states[inQ].branch_cycle_begin << "	" << branch_cycle_end << std::endl;
 	int result;
-	CYCLE = branch_cycle_begin;
+	CYCLE = _tmp_states[inQ].branch_cycle_begin;
+	// CYCLE = branch_cycle_begin;
 	// print_instr(INS_QUEUE[5]);
-	for (int i = branch_cycle_begin; i <= branch_cycle_end; ++i)
+	for (int i = _tmp_states[inQ].branch_cycle_begin; i <= branch_cycle_end; ++i)
 	{
+		std::cout << "******* in fake cycle " << CYCLE << std::endl;
 		for (int j = 0; j < INS_QUEUE.size(); ++j)
 		{
-
 			// std::cout << "****here i is: " << i << " j is: " << j << std::endl;
 			// if (j == INS_QUEUE.size() - 2)
 				// print_instr(INS_QUEUE[j]);
 			result = run_to_state(INS_QUEUE[j]);
 		}
+		++CYCLE;
+		commit_is_lock = FALSE;
+		empty_reg_locker();
 	}
+	--CYCLE;
+	std::cout << "REPROCESSING *************** " << CYCLE << std::endl;
 }
 
 void print_ins_in_queue()
@@ -2136,19 +2204,20 @@ int cal_branch_addr(struct instr& INS)
 		val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 	if (ins.find("Beq") == 0)
 	{
-		print_rs();
-		print_rat();
-		print_rob();
-		if (BTB[INS.num - 1][2] == TAKEN)
+		// print_rs();
+		// print_rat();
+		// print_rob();
+
+		if (_tmp_states[INS.inQ]._should_or_not_taken == TAKEN)
 		{
 			if (val_j == val_k)
 			{
 				res = INS.num + (4 + offset * 4) / 4;
-				std::cout << "*** Beq predict TAKEN correct, continue" << std::endl;
+				std::cout << INS.inQ << " *** Beq predict TAKEN correct, continue" << std::endl;
 			}
 			else
 			{
-				reset_all_to_previous_state();
+				reset_all_to_previous_state(INS.inQ);
 				branch_cycle_end = CYCLE;
 				std::cout << "here*****************&^&^&^&^&^&^&^&^ 111" << std::endl;
 				BTB[INS.num - 1][2] = NOT_TAKEN;
@@ -2157,18 +2226,20 @@ int cal_branch_addr(struct instr& INS)
 				// INS.state = EXE;
 				TO_PUSH_INTO_QUEUE = tmp_TO_PUSH_INTO_QUEUE;
 				res = tmp_TO_PUSH_INTO_QUEUE;
-				std::cout << "*** Beq predict TAKEN error, reset" << std::endl;
+				std::cout << INS.inQ << "  wtf *** Beq predict TAKEN error, reset" << std::endl;
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
-				reprocess_from_reset();
-				std::cout << "&*&*&*&*&*&*&*& " << CYCLE << std::endl;
+				reprocess_lock = TRUE;
+				reprocess_from_reset(INS.inQ);
+				reprocess_lock = FALSE;
+				// std::cout << "&*&*&*&*&*&*&*& " << CYCLE << std::endl;
 			}
 		}
 		else
 		{
 			if (val_j == val_k)
 			{
-				std::cout << "*** Beq predict NOT TAKEN error, reset" << std::endl;
-				reset_all_to_previous_state();
+				std::cout << INS.inQ << " *** Beq predict NOT TAKEN error, reset" << std::endl;
+				reset_all_to_previous_state(INS.inQ);
 				std::cout << "here*****************&^&^&^&^&^&^&^&^ 222" << std::endl;
 				branch_cycle_end = CYCLE;
 				BTB[INS.num - 1][2] = TAKEN;
@@ -2179,28 +2250,32 @@ int cal_branch_addr(struct instr& INS)
 				TO_PUSH_INTO_QUEUE = tmp_TO_PUSH_INTO_QUEUE;
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 				res = INS.num + (4 + offset * 4) / 4;
-				reprocess_from_reset();
+				reprocess_lock = TRUE;
+				reprocess_from_reset(INS.inQ);
+				reprocess_lock = FALSE;
 			}
 			else
 			{
-				std::cout << "*** Beq predict NOT TAKEN correct, continue" << std::endl;
+				std::cout << INS.inQ << " *** Beq predict NOT TAKEN correct, continue" << std::endl;
 				res = -1;
+				// branch_cycle_begin = CYCLE + 1;
 			}
 		}
 	}
 	else
 	{
-		if (BTB[INS.num - 1][2] == TAKEN)
+		if (_tmp_states[INS.inQ]._should_or_not_taken == TAKEN)
 		{
 			if (val_j != val_k)
 			{
 				std::cout << "*** Bne predict TAKEN correct, continue" << std::endl;
 				res = INS.num + (4 + offset * 4) / 4;
+				// branch_cycle_begin = CYCLE + 1;
 			}
 			else
 			{
 				std::cout << "*** Bne predict TAKEN error, reset" << std::endl;
-				reset_all_to_previous_state();
+				reset_all_to_previous_state(INS.inQ);
 				// print_ins_in_queue();
 				branch_cycle_end = CYCLE;
 				BTB[INS.num - 1][2] = NOT_TAKEN;
@@ -2210,7 +2285,9 @@ int cal_branch_addr(struct instr& INS)
 				TO_PUSH_INTO_QUEUE = tmp_TO_PUSH_INTO_QUEUE;
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 				res = tmp_TO_PUSH_INTO_QUEUE;
-				reprocess_from_reset();
+				reprocess_lock = TRUE;
+				reprocess_from_reset(INS.inQ);
+				reprocess_lock = FALSE;
 			}
 		}
 		else
@@ -2219,11 +2296,12 @@ int cal_branch_addr(struct instr& INS)
 			{
 				std::cout << "*** Bne predict NOT TAKEN correct, continue" << std::endl;
 				res = -1;
+				// branch_cycle_begin = CYCLE + 1;
 			}
 			else
 			{
 				std::cout << "*** Bne predict NOT TAKEN error, reset" << std::endl;
-				reset_all_to_previous_state();
+				reset_all_to_previous_state(INS.inQ);
 				// print_ins_in_queue();
 				branch_cycle_end = CYCLE;
 				BTB[INS.num - 1][2] = TAKEN;
@@ -2233,62 +2311,85 @@ int cal_branch_addr(struct instr& INS)
 				TO_PUSH_INTO_QUEUE = tmp_TO_PUSH_INTO_QUEUE;
 				std::cout << "Now the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 				res = INS.num + (4 + offset * 4) / 4;
-				reprocess_from_reset();
+				reprocess_lock = TRUE;
+				reprocess_from_reset(INS.inQ);
+				reprocess_lock = FALSE;
 			}
 		}
 	}
 	return res;
 }
 
-void reset_all_to_previous_state()
+void reset_all_to_previous_state(int inQ)
 {
-	ROB_NOW_NUM = tmp_ROB_NOW_NUM;
-	reset_rob_state();
-	reset_result_state();
-	reset_rat_state();
-	INTEGER_ADDER_RS_USED = tmp_INTEGER_ADDER_RS_USED;
-	FP_ADDER_RS_USED = tmp_FP_ADDER_RS_USED;
-	FP_MULT_RS_USED = tmp_FP_MULT_RS_USED;
-	LS_RS_USED = tmp_LS_RS_USED;
-	reset_rs_state();
-	reset_has_commit_state();
-	SHOULD_FETCH = tmp_SHOULD_FETCH;
-	CAN_COMMIT = tmp_CAN_COMMIT;
-	INTEGER_FU_USED = tmp_INTEGER_FU_USED;
-	FP_ADDER_FU_USED = tmp_FP_ADDER_FU_USED;
-	FP_MULT_FU_USED = tmp_FP_MULT_FU_USED;
-	LS_FU_USED = tmp_LS_FU_USED;
-	RESULT_NOW_ROW = tmp_RESULT_NOW_ROW;
+	ROB_NOW_NUM = _tmp_states[inQ].tmp_ROB_NOW_NUM;
+	reset_rob_state(inQ);
+	reset_result_state(inQ);
+	reset_rat_state(inQ);
+	INTEGER_ADDER_RS_USED = _tmp_states[inQ].tmp_INTEGER_ADDER_RS_USED;
+	FP_ADDER_RS_USED = _tmp_states[inQ].tmp_FP_ADDER_RS_USED;
+	FP_MULT_RS_USED = _tmp_states[inQ].tmp_FP_MULT_RS_USED;
+	LS_RS_USED = _tmp_states[inQ].tmp_LS_RS_USED;
+	reset_rs_state(inQ);
+	reset_has_commit_state(inQ);
+	SHOULD_FETCH = _tmp_states[inQ].tmp_SHOULD_FETCH;
+	CAN_COMMIT = _tmp_states[inQ].tmp_CAN_COMMIT;
+	INTEGER_FU_USED = _tmp_states[inQ].tmp_INTEGER_FU_USED;
+	FP_ADDER_FU_USED = _tmp_states[inQ].tmp_FP_ADDER_FU_USED;
+	FP_MULT_FU_USED = _tmp_states[inQ].tmp_FP_MULT_FU_USED;
+	LS_FU_USED = _tmp_states[inQ].tmp_LS_FU_USED;
+	RESULT_NOW_ROW = _tmp_states[inQ].tmp_RESULT_NOW_ROW;
 	// TO_PUSH_INTO_QUEUE = tmp_TO_PUSH_INTO_QUEUE;
-	reset_ins_queue_state();
+	reset_ins_queue_state(inQ);
 }
 
-void store_all_before_branch()
+void store_all_before_branch(int inQ)
 {
 	std::cout << "Store all value before branch" << std::endl;
-	tmp_ROB_NOW_NUM = ROB_NOW_NUM;
-	store_rob_state();
-	store_result_state();
-	store_rat_state();
-	tmp_INTEGER_ADDER_RS_USED = INTEGER_ADDER_RS_USED;
-	tmp_FP_ADDER_RS_USED = FP_ADDER_RS_USED;
-	tmp_FP_MULT_RS_USED = FP_MULT_RS_USED;
-	tmp_LS_RS_USED = LS_RS_USED;
-	store_rs_state();
-	store_has_commit_state();
-	tmp_SHOULD_FETCH = SHOULD_FETCH;
-	tmp_CAN_COMMIT = CAN_COMMIT;
-	tmp_INTEGER_FU_USED = INTEGER_FU_USED;
-	tmp_FP_ADDER_FU_USED = FP_ADDER_FU_USED;
-	tmp_FP_MULT_FU_USED = FP_MULT_FU_USED;
-	tmp_LS_FU_USED = LS_FU_USED;
-	tmp_RESULT_NOW_ROW = RESULT_NOW_ROW;
-	store_ins_queue_state();
+	_tmp_states[inQ].tmp_ROB_NOW_NUM = ROB_NOW_NUM;
+	_tmp_states[inQ].tmp_INTEGER_ADDER_RS_USED = INTEGER_ADDER_RS_USED;
+	_tmp_states[inQ].tmp_FP_ADDER_RS_USED = FP_ADDER_RS_USED;
+	_tmp_states[inQ].tmp_FP_MULT_RS_USED = FP_MULT_RS_USED;
+	_tmp_states[inQ].tmp_LS_RS_USED = LS_RS_USED;
+	_tmp_states[inQ].tmp_SHOULD_FETCH = SHOULD_FETCH;
+	_tmp_states[inQ].tmp_CAN_COMMIT = CAN_COMMIT;
+	_tmp_states[inQ].tmp_INTEGER_FU_USED = INTEGER_FU_USED;
+	_tmp_states[inQ].tmp_FP_ADDER_FU_USED = FP_ADDER_FU_USED;
+	_tmp_states[inQ].tmp_FP_MULT_FU_USED = FP_MULT_FU_USED;
+	_tmp_states[inQ].tmp_LS_FU_USED = LS_FU_USED;
+	_tmp_states[inQ].tmp_RESULT_NOW_ROW = RESULT_NOW_ROW;
+	_tmp_states[inQ].branch_cycle_begin = CYCLE + 1;
+	store_rob_state(inQ);
+	store_result_state(inQ);
+	store_rat_state(inQ);
+	store_rs_state(inQ);
+	store_has_commit_state(inQ);
+	store_ins_queue_state(inQ);
+	
+
+	// tmp_ROB_NOW_NUM = ROB_NOW_NUM;
+	// store_rob_state(inQ);
+	// store_result_state(inQ);
+	// store_rat_state(inQ);
+	// tmp_INTEGER_ADDER_RS_USED = INTEGER_ADDER_RS_USED;
+	// tmp_FP_ADDER_RS_USED = FP_ADDER_RS_USED;
+	// tmp_FP_MULT_RS_USED = FP_MULT_RS_USED;
+	// tmp_LS_RS_USED = LS_RS_USED;
+	// store_rs_state(inQ);
+	// store_has_commit_state(inQ);
+	// tmp_SHOULD_FETCH = SHOULD_FETCH;
+	// tmp_CAN_COMMIT = CAN_COMMIT;
+	// tmp_INTEGER_FU_USED = INTEGER_FU_USED;
+	// tmp_FP_ADDER_FU_USED = FP_ADDER_FU_USED;
+	// tmp_FP_MULT_FU_USED = FP_MULT_FU_USED;
+	// tmp_LS_FU_USED = LS_FU_USED;
+	// tmp_RESULT_NOW_ROW = RESULT_NOW_ROW;
+	// store_ins_queue_state(inQ);
 }
 
-void store_ins_queue_state()
+void store_ins_queue_state(int inQ)
 {
-	tmp_INS_QUEUE.clear();
+	_tmp_states[inQ].tmp_INS_QUEUE.clear();
 	for (int i = 0; i < INS_QUEUE.size(); ++i)
 	{
 		struct instr tmp_ins;
@@ -2302,209 +2403,217 @@ void store_ins_queue_state()
 		tmp_ins.in_rs = INS_QUEUE[i].in_rs;
 		tmp_ins.state = INS_QUEUE[i].state;
 		tmp_ins.inQ = INS_QUEUE[i].inQ;
-		tmp_INS_QUEUE.push_back(tmp_ins);
+		_tmp_states[inQ].tmp_INS_QUEUE.push_back(tmp_ins);
 	}
 }
 
-void reset_ins_queue_state()
+void reset_ins_queue_state(int inQ)
 {
 	INS_QUEUE.clear();
-	for (int i = 0; i < tmp_INS_QUEUE.size(); ++i)
+	for (int i = 0; i < _tmp_states[inQ].tmp_INS_QUEUE.size(); ++i)
 	{
 		struct instr tmp_ins;
-		tmp_ins._ins = tmp_INS_QUEUE[i]._ins;
-		tmp_ins.ex_begin = tmp_INS_QUEUE[i].ex_begin;
-		tmp_ins.mem_begin = tmp_INS_QUEUE[i].mem_begin;
-		tmp_ins.ins_type = tmp_INS_QUEUE[i].ins_type;
-		tmp_ins.cycle_need = tmp_INS_QUEUE[i].cycle_need;
-		tmp_ins.has_committed = tmp_INS_QUEUE[i].has_committed;
-		tmp_ins.num = tmp_INS_QUEUE[i].num;
-		tmp_ins.in_rs = tmp_INS_QUEUE[i].in_rs;
-		tmp_ins.state = tmp_INS_QUEUE[i].state;
-		tmp_ins.inQ = tmp_INS_QUEUE[i].inQ;
+		tmp_ins._ins = _tmp_states[inQ].tmp_INS_QUEUE[i]._ins;
+		tmp_ins.ex_begin = _tmp_states[inQ].tmp_INS_QUEUE[i].ex_begin;
+		tmp_ins.mem_begin = _tmp_states[inQ].tmp_INS_QUEUE[i].mem_begin;
+		tmp_ins.ins_type = _tmp_states[inQ].tmp_INS_QUEUE[i].ins_type;
+		tmp_ins.cycle_need = _tmp_states[inQ].tmp_INS_QUEUE[i].cycle_need;
+		tmp_ins.has_committed = _tmp_states[inQ].tmp_INS_QUEUE[i].has_committed;
+		tmp_ins.num = _tmp_states[inQ].tmp_INS_QUEUE[i].num;
+		tmp_ins.in_rs = _tmp_states[inQ].tmp_INS_QUEUE[i].in_rs;
+		tmp_ins.state = _tmp_states[inQ].tmp_INS_QUEUE[i].state;
+		tmp_ins.inQ = _tmp_states[inQ].tmp_INS_QUEUE[i].inQ;
 		INS_QUEUE.push_back(tmp_ins);
 	}
 }
 
-void store_rs_state()
+void store_rs_state(int inQ)
+{
+	/* Integer adder RS */
+	int i, j;
+	j = CONS_MAP[INTEGER_ADDER][NUM_RS];
+	_tmp_states[inQ].tmp_INTEGER_ADDER_RS = new struct RS *[j];
+	for (i = 0; i < j; ++i)
+	{
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i] = new struct RS;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->BUSY = INTEGER_ADDER_RS[i]->BUSY;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->OP = INTEGER_ADDER_RS[i]->OP;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->ROB_ENTRY = INTEGER_ADDER_RS[i]->ROB_ENTRY;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->VJ = INTEGER_ADDER_RS[i]->VJ;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->VK = INTEGER_ADDER_RS[i]->VK;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->QJ = INTEGER_ADDER_RS[i]->QJ;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->QK = INTEGER_ADDER_RS[i]->QK;
+		_tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->A = INTEGER_ADDER_RS[i]->A;
+	}
+
+	/* FP adder RS */
+	j = CONS_MAP[FP_ADDER][NUM_RS];
+	_tmp_states[inQ].tmp_FP_ADDER_RS = new struct RS *[j];
+	for (i = 0; i < j; ++i)
+	{
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i] = new struct RS;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->BUSY = FP_ADDER_RS[i]->BUSY;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->OP = FP_ADDER_RS[i]->OP;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->ROB_ENTRY = FP_ADDER_RS[i]->ROB_ENTRY;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->VJ = FP_ADDER_RS[i]->VJ;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->VK = FP_ADDER_RS[i]->VK;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->QJ = FP_ADDER_RS[i]->QJ;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->QK = FP_ADDER_RS[i]->QK;
+		_tmp_states[inQ].tmp_FP_ADDER_RS[i]->A = FP_ADDER_RS[i]->A;
+	}
+
+	/* FP multiplier RS */
+	j = CONS_MAP[FP_MULTIPLIER][NUM_RS];
+	_tmp_states[inQ].tmp_FP_MULT_RS = new struct RS *[j];
+	for (i = 0; i < j; ++i)
+	{
+		_tmp_states[inQ].tmp_FP_MULT_RS[i] = new struct RS;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->BUSY = FP_MULT_RS[i]->BUSY;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->OP = FP_MULT_RS[i]->OP;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->ROB_ENTRY = FP_MULT_RS[i]->ROB_ENTRY;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->VJ = FP_MULT_RS[i]->VJ;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->VK = FP_MULT_RS[i]->VK;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->QJ = FP_MULT_RS[i]->QJ;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->QK = FP_MULT_RS[i]->QK;
+		_tmp_states[inQ].tmp_FP_MULT_RS[i]->A = FP_MULT_RS[i]->A;
+	}
+
+	/* Load/store unit RS */
+	j = CONS_MAP[LOAD_STORE_UNIT][NUM_RS];
+	_tmp_states[inQ].tmp_LS_RS = new struct RS *[j];
+	for (i = 0; i < j; ++i)
+	{
+		_tmp_states[inQ].tmp_LS_RS[i] = new struct RS;
+		_tmp_states[inQ].tmp_LS_RS[i]->BUSY = LS_RS[i]->BUSY;
+		_tmp_states[inQ].tmp_LS_RS[i]->OP = LS_RS[i]->OP;
+		_tmp_states[inQ].tmp_LS_RS[i]->ROB_ENTRY = LS_RS[i]->ROB_ENTRY;
+		_tmp_states[inQ].tmp_LS_RS[i]->VJ = LS_RS[i]->VJ;
+		_tmp_states[inQ].tmp_LS_RS[i]->VK = LS_RS[i]->VK;
+		_tmp_states[inQ].tmp_LS_RS[i]->QJ = LS_RS[i]->QJ;
+		_tmp_states[inQ].tmp_LS_RS[i]->QK = LS_RS[i]->QK;
+		_tmp_states[inQ].tmp_LS_RS[i]->A = LS_RS[i]->A;
+	}
+}
+
+void reset_rs_state(int inQ)
 {
 	/* Integer adder RS */
 	int i, j;
 	j = CONS_MAP[INTEGER_ADDER][NUM_RS];
 	for (i = 0; i < j; ++i)
 	{
-		tmp_INTEGER_ADDER_RS[i]->BUSY = INTEGER_ADDER_RS[i]->BUSY;
-		tmp_INTEGER_ADDER_RS[i]->OP = INTEGER_ADDER_RS[i]->OP;
-		tmp_INTEGER_ADDER_RS[i]->ROB_ENTRY = INTEGER_ADDER_RS[i]->ROB_ENTRY;
-		tmp_INTEGER_ADDER_RS[i]->VJ = INTEGER_ADDER_RS[i]->VJ;
-		tmp_INTEGER_ADDER_RS[i]->VK = INTEGER_ADDER_RS[i]->VK;
-		tmp_INTEGER_ADDER_RS[i]->QJ = INTEGER_ADDER_RS[i]->QJ;
-		tmp_INTEGER_ADDER_RS[i]->QK = INTEGER_ADDER_RS[i]->QK;
-		tmp_INTEGER_ADDER_RS[i]->A = INTEGER_ADDER_RS[i]->A;
+		INTEGER_ADDER_RS[i]->BUSY = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->BUSY;
+		INTEGER_ADDER_RS[i]->OP = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->OP;
+		INTEGER_ADDER_RS[i]->ROB_ENTRY = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->ROB_ENTRY;
+		INTEGER_ADDER_RS[i]->VJ = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->VJ;
+		INTEGER_ADDER_RS[i]->VK = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->VK;
+		INTEGER_ADDER_RS[i]->QJ = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->QJ;
+		INTEGER_ADDER_RS[i]->QK = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->QK;
+		INTEGER_ADDER_RS[i]->A = _tmp_states[inQ].tmp_INTEGER_ADDER_RS[i]->A;
 	}
 
 	/* FP adder RS */
 	j = CONS_MAP[FP_ADDER][NUM_RS];
 	for (i = 0; i < j; ++i)
 	{
-		tmp_FP_ADDER_RS[i]->BUSY = FP_ADDER_RS[i]->BUSY;
-		tmp_FP_ADDER_RS[i]->OP = FP_ADDER_RS[i]->OP;
-		tmp_FP_ADDER_RS[i]->ROB_ENTRY = FP_ADDER_RS[i]->ROB_ENTRY;
-		tmp_FP_ADDER_RS[i]->VJ = FP_ADDER_RS[i]->VJ;
-		tmp_FP_ADDER_RS[i]->VK = FP_ADDER_RS[i]->VK;
-		tmp_FP_ADDER_RS[i]->QJ = FP_ADDER_RS[i]->QJ;
-		tmp_FP_ADDER_RS[i]->QK = FP_ADDER_RS[i]->QK;
-		tmp_FP_ADDER_RS[i]->A = FP_ADDER_RS[i]->A;
+		FP_ADDER_RS[i]->BUSY = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->BUSY;
+		FP_ADDER_RS[i]->OP = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->OP;
+		FP_ADDER_RS[i]->ROB_ENTRY = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->ROB_ENTRY;
+		FP_ADDER_RS[i]->VJ = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->VJ;
+		FP_ADDER_RS[i]->VK = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->VK;
+		FP_ADDER_RS[i]->QJ = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->QJ;
+		FP_ADDER_RS[i]->QK = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->QK;
+		FP_ADDER_RS[i]->A = _tmp_states[inQ].tmp_FP_ADDER_RS[i]->A;
 	}
 
 	/* FP multiplier RS */
 	j = CONS_MAP[FP_MULTIPLIER][NUM_RS];
 	for (i = 0; i < j; ++i)
 	{
-		tmp_FP_MULT_RS[i]->BUSY = FP_MULT_RS[i]->BUSY;
-		tmp_FP_MULT_RS[i]->OP = FP_MULT_RS[i]->OP;
-		tmp_FP_MULT_RS[i]->ROB_ENTRY = FP_MULT_RS[i]->ROB_ENTRY;
-		tmp_FP_MULT_RS[i]->VJ = FP_MULT_RS[i]->VJ;
-		tmp_FP_MULT_RS[i]->VK = FP_MULT_RS[i]->VK;
-		tmp_FP_MULT_RS[i]->QJ = FP_MULT_RS[i]->QJ;
-		tmp_FP_MULT_RS[i]->QK = FP_MULT_RS[i]->QK;
-		tmp_FP_MULT_RS[i]->A = FP_MULT_RS[i]->A;
+		FP_MULT_RS[i]->BUSY = _tmp_states[inQ].tmp_FP_MULT_RS[i]->BUSY;
+		FP_MULT_RS[i]->OP = _tmp_states[inQ].tmp_FP_MULT_RS[i]->OP;
+		FP_MULT_RS[i]->ROB_ENTRY = _tmp_states[inQ].tmp_FP_MULT_RS[i]->ROB_ENTRY;
+		FP_MULT_RS[i]->VJ = _tmp_states[inQ].tmp_FP_MULT_RS[i]->VJ;
+		FP_MULT_RS[i]->VK = _tmp_states[inQ].tmp_FP_MULT_RS[i]->VK;
+		FP_MULT_RS[i]->QJ = _tmp_states[inQ].tmp_FP_MULT_RS[i]->QJ;
+		FP_MULT_RS[i]->QK = _tmp_states[inQ].tmp_FP_MULT_RS[i]->QK;
+		FP_MULT_RS[i]->A = _tmp_states[inQ].tmp_FP_MULT_RS[i]->A;
 	}
 
 	/* Load/store unit RS */
 	j = CONS_MAP[LOAD_STORE_UNIT][NUM_RS];
 	for (i = 0; i < j; ++i)
 	{
-		tmp_LS_RS[i]->BUSY = LS_RS[i]->BUSY;
-		tmp_LS_RS[i]->OP = LS_RS[i]->OP;
-		tmp_LS_RS[i]->ROB_ENTRY = LS_RS[i]->ROB_ENTRY;
-		tmp_LS_RS[i]->VJ = LS_RS[i]->VJ;
-		tmp_LS_RS[i]->VK = LS_RS[i]->VK;
-		tmp_LS_RS[i]->QJ = LS_RS[i]->QJ;
-		tmp_LS_RS[i]->QK = LS_RS[i]->QK;
-		tmp_LS_RS[i]->A = LS_RS[i]->A;
+		LS_RS[i]->BUSY = _tmp_states[inQ].tmp_LS_RS[i]->BUSY;
+		LS_RS[i]->OP = _tmp_states[inQ].tmp_LS_RS[i]->OP;
+		LS_RS[i]->ROB_ENTRY = _tmp_states[inQ].tmp_LS_RS[i]->ROB_ENTRY;
+		LS_RS[i]->VJ = _tmp_states[inQ].tmp_LS_RS[i]->VJ;
+		LS_RS[i]->VK = _tmp_states[inQ].tmp_LS_RS[i]->VK;
+		LS_RS[i]->QJ = _tmp_states[inQ].tmp_LS_RS[i]->QJ;
+		LS_RS[i]->QK = _tmp_states[inQ].tmp_LS_RS[i]->QK;
+		LS_RS[i]->A = _tmp_states[inQ].tmp_LS_RS[i]->A;
 	}
 }
 
-void reset_rs_state()
+void store_rat_state(int inQ)
 {
-	/* Integer adder RS */
-	int i, j;
-	j = CONS_MAP[INTEGER_ADDER][NUM_RS];
-	for (i = 0; i < j; ++i)
-	{
-		INTEGER_ADDER_RS[i]->BUSY = tmp_INTEGER_ADDER_RS[i]->BUSY;
-		INTEGER_ADDER_RS[i]->OP = tmp_INTEGER_ADDER_RS[i]->OP;
-		INTEGER_ADDER_RS[i]->ROB_ENTRY = tmp_INTEGER_ADDER_RS[i]->ROB_ENTRY;
-		INTEGER_ADDER_RS[i]->VJ = tmp_INTEGER_ADDER_RS[i]->VJ;
-		INTEGER_ADDER_RS[i]->VK = tmp_INTEGER_ADDER_RS[i]->VK;
-		INTEGER_ADDER_RS[i]->QJ = tmp_INTEGER_ADDER_RS[i]->QJ;
-		INTEGER_ADDER_RS[i]->QK = tmp_INTEGER_ADDER_RS[i]->QK;
-		INTEGER_ADDER_RS[i]->A = tmp_INTEGER_ADDER_RS[i]->A;
-	}
-
-	/* FP adder RS */
-	j = CONS_MAP[FP_ADDER][NUM_RS];
-	for (i = 0; i < j; ++i)
-	{
-		FP_ADDER_RS[i]->BUSY = tmp_FP_ADDER_RS[i]->BUSY;
-		FP_ADDER_RS[i]->OP = tmp_FP_ADDER_RS[i]->OP;
-		FP_ADDER_RS[i]->ROB_ENTRY = tmp_FP_ADDER_RS[i]->ROB_ENTRY;
-		FP_ADDER_RS[i]->VJ = tmp_FP_ADDER_RS[i]->VJ;
-		FP_ADDER_RS[i]->VK = tmp_FP_ADDER_RS[i]->VK;
-		FP_ADDER_RS[i]->QJ = tmp_FP_ADDER_RS[i]->QJ;
-		FP_ADDER_RS[i]->QK = tmp_FP_ADDER_RS[i]->QK;
-		FP_ADDER_RS[i]->A = tmp_FP_ADDER_RS[i]->A;
-	}
-
-	/* FP multiplier RS */
-	j = CONS_MAP[FP_MULTIPLIER][NUM_RS];
-	for (i = 0; i < j; ++i)
-	{
-		FP_MULT_RS[i]->BUSY = tmp_FP_MULT_RS[i]->BUSY;
-		FP_MULT_RS[i]->OP = tmp_FP_MULT_RS[i]->OP;
-		FP_MULT_RS[i]->ROB_ENTRY = tmp_FP_MULT_RS[i]->ROB_ENTRY;
-		FP_MULT_RS[i]->VJ = tmp_FP_MULT_RS[i]->VJ;
-		FP_MULT_RS[i]->VK = tmp_FP_MULT_RS[i]->VK;
-		FP_MULT_RS[i]->QJ = tmp_FP_MULT_RS[i]->QJ;
-		FP_MULT_RS[i]->QK = tmp_FP_MULT_RS[i]->QK;
-		FP_MULT_RS[i]->A = tmp_FP_MULT_RS[i]->A;
-	}
-
-	/* Load/store unit RS */
-	j = CONS_MAP[LOAD_STORE_UNIT][NUM_RS];
-	for (i = 0; i < j; ++i)
-	{
-		LS_RS[i]->BUSY = tmp_LS_RS[i]->BUSY;
-		LS_RS[i]->OP = tmp_LS_RS[i]->OP;
-		LS_RS[i]->ROB_ENTRY = tmp_LS_RS[i]->ROB_ENTRY;
-		LS_RS[i]->VJ = tmp_LS_RS[i]->VJ;
-		LS_RS[i]->VK = tmp_LS_RS[i]->VK;
-		LS_RS[i]->QJ = tmp_LS_RS[i]->QJ;
-		LS_RS[i]->QK = tmp_LS_RS[i]->QK;
-		LS_RS[i]->A = tmp_LS_RS[i]->A;
-	}
-}
-
-void store_rat_state()
-{
-	tmp_RAT.clear();
+	_tmp_states[inQ].tmp_RAT.clear();
 	for (std::unordered_map<std::string, int>::iterator it = RAT.begin();
 		it != RAT.end(); ++it)
 	{
 		std::pair<std::string, int> the_pair (it->first, it->second);
-		tmp_RAT.insert(the_pair);
+		_tmp_states[inQ].tmp_RAT.insert(the_pair);
 	}
 }
 
-void reset_rat_state()
+void reset_rat_state(int inQ)
 {
 	RAT.clear();
-	for (std::unordered_map<std::string, int>::iterator it = tmp_RAT.begin();
-		it != tmp_RAT.end(); ++it)
+	for (std::unordered_map<std::string, int>::iterator it = _tmp_states[inQ].tmp_RAT.begin();
+		it != _tmp_states[inQ].tmp_RAT.end(); ++it)
 	{
 		std::pair<std::string, int> the_pair (it->first, it->second);
 		RAT.insert(the_pair);
 	}
 }
 
-void store_has_commit_state()
+void store_has_commit_state(int inQ)
 {
-	tmp_HAS_COMMIT.clear();
+	_tmp_states[inQ].tmp_HAS_COMMIT.clear();
 	for (std::unordered_map<int, int>::iterator it = HAS_COMMIT.begin();
 		it != HAS_COMMIT.end(); ++it)
 	{
 		std::pair<int, int> the_pair (it->first, it->second);
-		tmp_HAS_COMMIT.insert(the_pair);
+		_tmp_states[inQ].tmp_HAS_COMMIT.insert(the_pair);
 	}
 }
 
-void reset_has_commit_state()
+void reset_has_commit_state(int inQ)
 {
 	HAS_COMMIT.clear();
-	for (std::unordered_map<int, int>::iterator it = tmp_HAS_COMMIT.begin();
-		it != tmp_HAS_COMMIT.end(); ++it)
+	for (std::unordered_map<int, int>::iterator it = _tmp_states[inQ].tmp_HAS_COMMIT.begin();
+		it != _tmp_states[inQ].tmp_HAS_COMMIT.end(); ++it)
 	{
 		std::pair<int, int> the_pair (it->first, it->second);
 		HAS_COMMIT.insert(the_pair);
 	}
 }
 
-void store_result_state()
+void store_result_state(int inQ)
 {
 	for (int i = 0; i < 100; ++i)
 	{
 		for (int j = 0; j < 5; ++j)
-			tmp_RESULT[i][j] = RESULT[i][j];
+			_tmp_states[inQ].tmp_RESULT[i][j] = RESULT[i][j];
 	}
 }
 
-void reset_result_state()
+void reset_result_state(int inQ)
 {
 	for (int i = 0; i < 100; ++i)
 	{
 		for (int j = 0; j < 5; ++j)
-			RESULT[i][j] = tmp_RESULT[i][j];
+			RESULT[i][j] = _tmp_states[inQ].tmp_RESULT[i][j];
 	}
 }
 

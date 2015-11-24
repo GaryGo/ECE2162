@@ -283,8 +283,13 @@ static int BTB[8][3];
 /**
  *  branch CYCLE
  */
-static int branch_cycle_begin;
+static int branch_cycle_begin = 0;
 static int branch_cycle_end;
+
+/**
+ *  reprocess_lock
+ */
+static int reprocess_lock = FALSE;
 
 /****************************************************************************************
  *     								              Structure Definition                                *
@@ -333,6 +338,38 @@ static int branch_cycle_end;
  	float value;
  	int finish;
  };
+
+/**
+ *  temp state struct
+ */
+struct TMP_STATE
+{
+  int tmp_ROB_NOW_NUM;
+  struct rob_entry **tmp_ROB;
+  int tmp_RESULT[100][5];
+  std::unordered_map<std::string, int> tmp_RAT;
+  struct RS **tmp_INTEGER_ADDER_RS;
+  int tmp_INTEGER_ADDER_RS_USED;
+  struct RS **tmp_FP_ADDER_RS;
+  int tmp_FP_ADDER_RS_USED;
+  struct RS **tmp_FP_MULT_RS;
+  int tmp_FP_MULT_RS_USED;
+  struct RS **tmp_LS_RS;
+  int tmp_LS_RS_USED;
+  std::unordered_map<int, int> tmp_HAS_COMMIT;
+  int tmp_SHOULD_FETCH;
+  int tmp_CAN_COMMIT;
+  int tmp_INTEGER_FU_USED;
+  int tmp_FP_ADDER_FU_USED;
+  int tmp_FP_MULT_FU_USED;
+  int tmp_LS_FU_USED;
+  int tmp_RESULT_NOW_ROW;
+  std::vector<struct instr> tmp_INS_QUEUE;
+  int tmp_TO_PUSH_INTO_QUEUE;
+  int branch_cycle_begin;
+  int _should_or_not_taken;
+} _tmp_states[100];
+
 
 
 /****************************************************************************************
@@ -639,85 +676,85 @@ print_tem_reg_locker();
  *  reset all states previous to the branch prediction
  */
 void
-reset_all_to_previous_state();
+reset_all_to_previous_state(int inQ);
 
 /**
  *  store all states before branch
  */
 void
-store_all_before_branch();
+store_all_before_branch(int inQ);
 
 /**
  *  store rob state before branch
  */
 void 
-store_rob_state();
+store_rob_state(int inQ);
 
 /**
  *  reset rob state
  */
 void
-reset_rob_state();
+reset_rob_state(int inQ);
 
 /**
  *  store result state
  */
 void 
-store_result_state();
+store_result_state(int inQ);
 
 /**
  *  reset result state
  */
 void
-reset_result_state();
+reset_result_state(int inQ);
 
 /**
  *  store rat state
  */
 void 
-store_rat_state();
+store_rat_state(int inQ);
 
 /**
  *  reset rat state
  */
 void
-reset_rat_state();
+reset_rat_state(int inq);
 
 /**
  *  store rs state
  */
 void
-store_rs_state();
+store_rs_state(int inQ);
 
 /**
  *  reset rs state
  */
 void
-reset_rs_state();
+reset_rs_state(int inQ);
 
 /**
  *  store the has commit state
  */
 void 
-store_has_commit_state();
+store_has_commit_state(int inQ);
 
 /**
  *  reset has commit state
  */
 void
-reset_has_commit_state();
+reset_has_commit_state(int inQ);
 
 /**
  *  void store_ins_queue_state()
  */
 void 
-store_ins_queue_state();
+store_ins_queue_state(int inQ);
 
 /**
  *  reset ins queue
  */
 void
-reset_ins_queue_state();
+reset_ins_queue_state(int inQ);
 
 /**
  *  print instruction in queue
@@ -729,13 +766,13 @@ print_ins_in_queue();
  *  print temp instruction in queue
  */
 void
-print_tmp_ins_in_queue();
+print_tmp_ins_in_queue(int inQ);
 
 /**
  *  after reset, fill all result blank
  */
 void
-reprocess_from_reset();
+reprocess_from_reset(int inQ);
 
 // Sd F6, 0(R2)
 // Add R1, R1, R2
