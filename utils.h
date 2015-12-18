@@ -40,6 +40,9 @@
 /****************************************************************************************
  *     								           Global Variables                                       *
  ****************************************************************************************/
+static int memory_unp_locker = 0;
+
+static int overall_stall = 0;
 
 /**
  * instructions number
@@ -290,6 +293,16 @@ static int branch_cycle_end;
  *  reprocess_lock
  */
 static int reprocess_lock = FALSE;
+
+/**
+ *  rs release lock, for type
+ */
+static int INTEGER_ADDER_RS_USED_LOCKER = 0;
+static int FP_ADDER_RS_USED_LOCKER = 0;
+static int FP_MULT_RS_USED_LOCKER = 0;
+static int LS_RS_USED_LOCKER = 0;
+
+static int UNPIPELINE_LOCK = 0;
 
 /****************************************************************************************
  *     								              Structure Definition                                *
@@ -773,6 +786,13 @@ print_tmp_ins_in_queue(int inQ);
  */
 void
 reprocess_from_reset(int inQ);
+
+/**
+ *  release rs used lock
+ */
+void 
+release_rs_used_lock(int type);
+
 
 // Sd F6, 0(R2)
 // Add R1, R1, R2

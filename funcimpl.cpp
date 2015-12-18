@@ -16,7 +16,7 @@ void read_file(std::string file_name)
 	for (i = 0; i < 3; ++i)
 	{
         fin >> header >> header;
-    for (j = 0; j < 4; ++j)
+    	for (j = 0; j < 4; ++j)
         {
             if (j == 2)
             {
@@ -53,6 +53,8 @@ void read_file(std::string file_name)
         std::pair<std::string, float> the_pair (reg, atof(val.c_str()));
         REG.insert(the_pair);
 	}
+	std::pair<std::string, float> the_pair ("R0", 0);
+	REG.insert(the_pair);
 
 	/* store all memory address and value into MEM */
 	fin.getline(buf, sizeof(buf));
@@ -148,6 +150,14 @@ void pro_instr(const std::string &s, std::vector<std::string> &elems)
 
 void init_all()
 {
+	/**
+	 *  CONS_MAP changed for all # of fu
+	 */
+	// for (int v = 0; v < 4; ++v) {
+	// 	CONS_MAP[v][3] = 100;
+	// }
+
+
 	int i; /* for loop counting */
 	int j; /* for creating rs */
 	/* result table */
@@ -823,14 +833,22 @@ int check_rs_available(struct instr& INS)
 	// std::cout << INSTRS[num]->_ins << std::endl;
 	if (INS.ins_type == INTEGER_ADDER)
 	{
-		if (INTEGER_ADDER_RS_USED == CONS_MAP[INTEGER_ADDER][NUM_RS])
+		if (INTEGER_ADDER_RS_USED == CONS_MAP[INTEGER_ADDER][NUM_RS]) {
 			return FALSE;
+		}
+		else if (INTEGER_ADDER_RS_USED != CONS_MAP[INTEGER_ADDER][NUM_RS] && INTEGER_ADDER_RS_USED_LOCKER == 1) {
+			std::cout << "&*&*^&^&56565656 here " << std::endl;
+			return FALSE;
+		}
 		else
 			return TRUE;
 	}
 	else if (INS.ins_type == FP_ADDER)
 	{
-		if (FP_ADDER_RS_USED == CONS_MAP[FP_ADDER][NUM_RS])
+		if (FP_ADDER_RS_USED == CONS_MAP[FP_ADDER][NUM_RS]) {
+			return FALSE;
+		}
+		else if (FP_ADDER_RS_USED != CONS_MAP[FP_ADDER][NUM_RS] && FP_ADDER_RS_USED_LOCKER == 1)
 			return FALSE;
 		else
 			return TRUE;
@@ -839,12 +857,16 @@ int check_rs_available(struct instr& INS)
 	{
 		if (FP_MULT_RS_USED == CONS_MAP[FP_MULTIPLIER][NUM_RS])
 			return FALSE;
+		else if (FP_MULT_RS_USED != CONS_MAP[FP_MULTIPLIER][NUM_RS] && FP_MULT_RS_USED_LOCKER == 1)
+			return FALSE;
 		else
 			return TRUE;
 	}
 	else
 	{
 		if (LS_RS_USED == CONS_MAP[LOAD_STORE_UNIT][NUM_RS])
+			return FALSE;
+		else if (LS_RS_USED != CONS_MAP[LOAD_STORE_UNIT][NUM_RS] && LS_RS_USED_LOCKER == 1)
 			return FALSE;
 		else
 			return TRUE;
@@ -861,6 +883,7 @@ int issue(struct instr& INS)
 		int tmp = check_rs_available(INS);
 		if (tmp == TRUE) /* entry available for this instruction */
 		{
+			overall_stall = 0;
 			/* remember to minus one */
 			// RESULT[SHOULD_FETCH - 1][ISSUE] = CYCLE;
 			// std::cout << RESULT[SHOULD_FETCH - 1][ISSUE] << std::endl;
@@ -876,10 +899,18 @@ int issue(struct instr& INS)
 			std::cout << "Instruction " << INS.num << " issue" << std::endl;
 			// std::cout << "******** &&&&&&&& ^^^^^^^^ " << INS_QUEUE[INS_QUEUE.size() - 1].state <<std::endl;
 			INS.state = ISSUE;
+
+			/*
+			 *  tmp added into program
+			 */
+			RESULT[INS.inQ - 1][ISSUE] = CYCLE;
 			// std::cout << "debugging " << INS.state << "	" << SHOULD_FETCH << std::endl;
 			return TRUE;
+		} else {
+			overall_stall = 1;
 		}
 		std::cout << num << " RS is full." << std::endl;
+		// ++ROB_NOW_NUM;
 		return FALSE;
 	}
 	return TRUE;
@@ -1051,8 +1082,7 @@ int execute(struct instr& INS)
 
 
 
-				if (addr_ready(INS) == TRUE && (LS_RS[INS.in_rs]->VJ != EMPTY ||
-					ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3).c_str()) - 1]->finish == TRUE) &&
+				if (addr_ready(INS) == TRUE &&
 					TEM_REG_LOCKER.find(reg) == TEM_REG_LOCKER.end() && TEM_REG_LOCKER.find(operant1) == TEM_REG_LOCKER.end())
 				{
 					// std::cout << "**********everything's ready **********" << std::endl;
@@ -1075,7 +1105,7 @@ int execute(struct instr& INS)
 
 			std::cout << "**** IN FAKE CYCLE FOR DEBUGGING" << std::endl;
 
-			for (auto it = TEM_REG_LOCKER.begin(); it != TEM_REG_LOCKER.end(); ++it)
+			for (std::unordered_map<std::string, int>::iterator it = TEM_REG_LOCKER.begin(); it != TEM_REG_LOCKER.end(); ++it)
 			{
 				std::cout << it->first << "	" << it->second << std::endl;
 			}
@@ -1224,13 +1254,11 @@ int execute(struct instr& INS)
 
 void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 {
-	if (integer_adder_stall == TRUE)
-		return;
-	// if (branch_stall == TRUE)
-	// {
-	// 	std::cout << "Branch stall, wait to solve the branch" << std::endl;
+	// if (integer_adder_stall == TRUE && (INSTRS[num - 1]._ins.find("Add ") == 0 || INSTRS[num - 1]._ins.find("Addi") == 0 || INSTRS[num - 1]._ins.find("Sub ") == 0))
 	// 	return;
-	// }
+	if (overall_stall == 1) 
+		return;
+
 	if (num > INS_NUM)
 	{
 		std::cout << "No Instruction to be issued" << std::endl;
@@ -1257,8 +1285,11 @@ void move_to_pipeline_do_nothing(std::vector<struct instr>& INS_QUEUE, int num)
 	tmp.state = -1;
 	tmp.inQ = INS_QUEUE.size() + 1;
 	INS_QUEUE.push_back(tmp);
-	if (tmp._ins.find("Addi") == 0)
+	if (tmp._ins.find("Addi") == 0 || tmp._ins.find("Add ") == 0) {
 		integer_adder_stall = TRUE;
+		std::cout << "&*&*&*&*&*^&^&#$#$ " << integer_adder_stall << std::endl;
+	}
+		
 	// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 	if (INSTRS[num - 1]._ins.find("Beq") == 0 || INSTRS[num - 1]._ins.find("Bne") == 0)
 	{
@@ -1310,6 +1341,11 @@ int memory(struct instr& INS)
 	std::string ins = INS._ins;
 	if (ins.find("Ld") == 0 || ins.find("Sd") == 0)
 	{
+		if (memory_unp_locker == 1) {
+			return FALSE;
+		}
+		memory_unp_locker = 1;
+
 		if (RESULT[INS.inQ - 1][EXE] != 0)
 		{
 			std::cout << "Instruction " << INS.inQ << " memory begin" << std::endl;
@@ -1369,12 +1405,14 @@ int write_back(struct instr& INS)
 	int num = INS.num;
 	if (ins.find("Ld") == 0)
 	{
+		
 	    if (RESULT[INS.inQ - 1][MEMORY] != 0)
 	    {
 	        int need = INS.cycle_need;
 	        int mem_begin = RESULT[INS.inQ - 1][MEMORY];
 	        if (CYCLE - mem_begin == need)
 	        {
+	        	memory_unp_locker = 0;
 	            RESULT[INS.inQ - 1][WB] = CYCLE;
 	            float res = do_instr_cal(INS);
 	            // reset_rat(operant1);
@@ -1400,16 +1438,19 @@ int write_back(struct instr& INS)
 	{
 		if (RESULT[INS.inQ - 1][MEMORY] != 0)
 		{
+
 			int need = INS.cycle_need;
 			int mem_begin = RESULT[INS.inQ - 1][MEMORY];
 			if (CYCLE - mem_begin == need)
 			{
-				RESULT[INS.inQ - 1][WB] = CYCLE;
+				memory_unp_locker = 0;
+				RESULT[INS.inQ - 1][WB] = mem_begin;
 				// float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
 				// clear_rs_entry(num, LOAD_STORE_UNIT);
-				std::cout << "Instruction " << INS.inQ << " write back" << std::endl;
+				// std::cout << "Instruction " << INS.inQ << " write back" << std::endl;
 				INS.state = WB;
+				commit(INS);
 				/* update ROB */
 				return TRUE;
 			}
@@ -1470,6 +1511,8 @@ int write_back(struct instr& INS)
 			}
 			else
 			{
+				std::cout << "&&^&^#&@&*&*&*$*#&*&*$#&*& for debugging &*&*& " << std::endl;
+				print_rob(); 
 				// reset_rat(operant1);
 				--INTEGER_FU_USED;
 				clear_rs_entry(INS.in_rs, INTEGER_ADDER);
@@ -1617,7 +1660,7 @@ float do_instr_cal(struct instr& INS)
 		}
 		else if (op.find("Addi") == 0)
 		{
-			// std::cout << "***************############### in Addi cal instr" << std::endl;
+			std::cout << "***************############### in Addi cal instr" << std::endl;
 			if (INTEGER_ADDER_RS[_in_rs]->VJ != EMPTY)
 				val_j = INTEGER_ADDER_RS[_in_rs]->VJ;
 			else
@@ -1626,6 +1669,7 @@ float do_instr_cal(struct instr& INS)
 			}
 			val_k = INTEGER_ADDER_RS[_in_rs]->VK;
 			float res = val_j + val_k;
+			std::cout << "***************############### in Addi cal instr " << res << std::endl;
 			update_rob_value(_in_rob, res);
 			return res;
 		}
@@ -1644,7 +1688,9 @@ float do_instr_cal(struct instr& INS)
 				val_k = ROB[atoi(INTEGER_ADDER_RS[_in_rs]->QK.substr(3).c_str()) - 1]->value;
 			}
 			float res = val_j + val_k;
+			print_rob();
 			update_rob_value(_in_rob, res);
+			print_rob();
 			return res;
 		}
 	}
@@ -1687,7 +1733,11 @@ void clear_rs_entry(int num, int type)
 		INTEGER_ADDER_RS[num]->QJ = "";
 		INTEGER_ADDER_RS[num]->QK = "";
 		INTEGER_ADDER_RS[num]->A = EMPTY;
+		if (INTEGER_ADDER_RS_USED == CONS_MAP[INTEGER_ADDER][NUM_RS]) {
+			INTEGER_ADDER_RS_USED_LOCKER = 1;
+		}
 		--INTEGER_ADDER_RS_USED;
+		std::cout << "90909090909090^^^^^^^^^^^^^^ here : " << INTEGER_ADDER_RS_USED_LOCKER << std::endl;
 	}
 	else if (type == FP_ADDER)
 	{
@@ -1699,7 +1749,11 @@ void clear_rs_entry(int num, int type)
 		FP_ADDER_RS[num]->QJ = "";
 		FP_ADDER_RS[num]->QK = "";
 		FP_ADDER_RS[num]->A = EMPTY;
+		if (FP_ADDER_RS_USED == CONS_MAP[FP_ADDER][NUM_RS]) {
+			FP_ADDER_RS_USED_LOCKER = 1;
+		}
 		--FP_ADDER_RS_USED;
+		std::cout << "90909090909090^^^^^^^^^^^^^^ here : " << FP_ADDER_RS_USED_LOCKER << std::endl;
 	}
 	else if (type == FP_MULTIPLIER)
 	{
@@ -1711,7 +1765,11 @@ void clear_rs_entry(int num, int type)
 		FP_MULT_RS[num]->QJ = "";
 		FP_MULT_RS[num]->QK = "";
 		FP_MULT_RS[num]->A = EMPTY;
+		if (FP_MULT_RS_USED == CONS_MAP[FP_MULTIPLIER][NUM_RS]) {
+			FP_MULT_RS_USED_LOCKER = 1;
+		}
 		--FP_MULT_RS_USED;
+		std::cout << "90909090909090^^^^^^^^^^^^^^ here : " << FP_MULT_RS_USED_LOCKER << std::endl;
 	}
 	else
 	{
@@ -1723,7 +1781,12 @@ void clear_rs_entry(int num, int type)
 		LS_RS[num]->QJ = "";
 		LS_RS[num]->QK = "";
 		LS_RS[num]->A = EMPTY;
+		std::cout << "now the &^&^&^&^&^&^&^& " << LS_RS_USED << " " <<  CONS_MAP[LOAD_STORE_UNIT][NUM_FUS] << std::endl;
+		if (LS_RS_USED == CONS_MAP[LOAD_STORE_UNIT][NUM_RS]) {
+			LS_RS_USED_LOCKER = 1;
+		}
 		--LS_RS_USED;
+		std::cout << "90909090909090^^^^^^^^^^^^^^ here : " << LS_RS_USED_LOCKER << std::endl;
 	}
 }
 
@@ -1769,7 +1832,7 @@ int run_to_state(struct instr& INS)
 				}
 			}
 		}
-		
+
 
 	}
 	else if (state == EXE)
@@ -1809,7 +1872,7 @@ int run_to_state(struct instr& INS)
 	else if (state == WB)
 	{
 		std::cout << "Instruction " << INS.inQ << " asking for commit" << std::endl;
-		std::cout << "Instruction " << INS.inQ << " state: " << INS.state << " has commit: " << INS.has_committed << std::endl; 
+		std::cout << "Instruction " << INS.inQ << " state: " << INS.state << " has commit: " << INS.has_committed << std::endl;
  		std::cout << CAN_COMMIT << "	" << commit_is_lock << std::endl;
  		result = commit(INS);
 		// if (result == TRUE)
@@ -1822,6 +1885,20 @@ int run_to_state(struct instr& INS)
 	return result;
 }
 
+void release_rs_used_lock() {
+	if (INTEGER_ADDER_RS_USED_LOCKER == 1) 
+		INTEGER_ADDER_RS_USED_LOCKER = 0;
+
+	if (FP_ADDER_RS_USED_LOCKER == 1)
+		FP_ADDER_RS_USED_LOCKER = 0;
+
+	if (FP_MULT_RS_USED_LOCKER == 1)
+		FP_MULT_RS_USED_LOCKER = 0;
+
+	if (LS_RS_USED_LOCKER == 1)
+		LS_RS_USED_LOCKER = 0;
+}
+
 int commit(struct instr& INS)
 {
 	if (INS.has_committed == TRUE)
@@ -1830,6 +1907,7 @@ int commit(struct instr& INS)
 	{
 		if ((INS._ins).find("Sd") == 0)
 		{
+			// memory_unp_locker = 0;
 			// float res = do_instr_cal(INSTRS, num);
 				// // reset_rat(operant1);
 				// clear_rs_entry(num, LOAD_STORE_UNIT);
@@ -1842,7 +1920,8 @@ int commit(struct instr& INS)
 			std::string operant2 = elems[2];
 			MEMORY_LOCK.erase(operant2);
 
-			if (RESULT[INS.inQ - 1][WB] != 0 && INS.inQ == CAN_COMMIT && commit_is_lock == FALSE)
+			if (RESULT[INS.inQ - 1][WB] != 0 && INS.inQ == CAN_COMMIT && commit_is_lock == FALSE && (LS_RS[INS.in_rs]->VJ != EMPTY ||
+					ROB[atoi(LS_RS[INS.in_rs]->QJ.substr(3).c_str()) - 1]->finish == TRUE))
 			{
 				float res = do_instr_cal(INS);
 				// // reset_rat(operant1);
@@ -1881,7 +1960,10 @@ int commit(struct instr& INS)
 		{
 			// if (ROB[_in_rob]->finish == TRUE)
 			// {
-			if ((INS._ins).find("Addi") == 0)
+			// if ((INS._ins).find("Ld") == 0) {
+			// 	memory_unp_locker = 0;
+			// }
+			if ((INS._ins).find("Addi") == 0 || (INS._ins).find("Add ") == 0 || (INS._ins).find("Sub ") == 0)
 				integer_adder_stall = FALSE;
 			commit_is_lock = TRUE;
 			RESULT[INS.inQ - 1][COMMIT] = CYCLE;
@@ -1944,7 +2026,7 @@ void print_result()
 void print_rob()
 {
 	std::cout << "********** ROB **********" << std::endl;
-	for (int i = 0; i < 20; ++i)
+	for (int i = 0; i < 30; ++i)
 	{
 		std::cout << ROB[i]->rob_name << "	" << ROB[i]->dest << "	" << ROB[i]->value << "	" << ROB[i]->finish << std::endl;
 	}
@@ -2057,6 +2139,7 @@ void run_simulator()
 	int tmp_should_fetch;
 	for (;; ++CYCLE)
 	{
+		release_rs_used_lock();
 		empty_reg_locker();
 		release_memory_locker();
 		commit_is_lock = FALSE;
@@ -2096,10 +2179,10 @@ void run_simulator()
 		// 	std::cout << "the to push into queue is: " << TO_PUSH_INTO_QUEUE << std::endl;
 		// 	break;
 		// }
-		if(CYCLE == 44)
-		// if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE && TO_PUSH_INTO_QUEUE > INS_NUM)
+		// if(CYCLE == 21)
+        if (INS_QUEUE[INS_QUEUE.size() - 1].has_committed == TRUE && TO_PUSH_INTO_QUEUE > INS_NUM)
 		{
-			print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
+			// print_instr(INS_QUEUE[INS_QUEUE.size() - 1]);
 			// print_instr(tmp_INS_QUEUE[tmp_INS_QUEUE.size() - 1]);
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 6]);
 			// print_instr(tmp_INS_QUEUE[tmp_INS_QUEUE.size() - 6]);
@@ -2112,18 +2195,18 @@ void run_simulator()
 			// print_instr(INS_QUEUE[INS_QUEUE.size() - 2]);
 			// print_instr(tmp_INS_QUEUE[tmp_INS_QUEUE.size() - 2]);
 			refresh_value();
-			//print_rat();
-			//print_rob();
+			// print_rat();
+			print_rob();
 			//print_tmp_rob();
 			// print_memory();
-			// print_rs();
-			// print_arf();
+			print_rs();
+			print_arf();   
             // print_arf();
-            // print_memory();
+            print_memory();
 			print_result();
-			print_tmp_ins_in_queue(6);
-			std::cout << BTB[2][2] << std::endl;
-			std::cout << _tmp_states[6]._should_or_not_taken << std::endl;
+			// print_tmp_ins_in_queue(6);
+			// std::cout << BTB[2][2] << std::endl;
+			// std::cout << _tmp_states[6]._should_or_not_taken << std::endl;
 			// print_memory_lock();
 			// print_just_commit_addr();
 			//
@@ -2365,7 +2448,7 @@ void store_all_before_branch(int inQ)
 	store_rs_state(inQ);
 	store_has_commit_state(inQ);
 	store_ins_queue_state(inQ);
-	
+
 
 	// tmp_ROB_NOW_NUM = ROB_NOW_NUM;
 	// store_rob_state(inQ);
